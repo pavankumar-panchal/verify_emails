@@ -12,26 +12,36 @@ ini_set('log_errors', 1);
 set_time_limit(0);
 ini_set('memory_limit', '512M');
 
-function consoleOutput($message, $type = 'INFO') {
-    $timestamp = date('Y-m-d H:i:s');
-    $formatted = "[$timestamp][$type] $message";
+// Command line output
+function consoleOutput($message) {
     if (php_sapi_name() === 'cli') {
-        echo $formatted . PHP_EOL;
+        echo $message . PHP_EOL;
     }
 }
 
+// Get first IP for a domain (MX or A record)
 function getDomainIP($domain) {
+    // Check MX records first
     if (getmxrr($domain, $mxhosts)) {
         $mxIp = @gethostbyname($mxhosts[0]);
-        if ($mxIp !== $mxhosts[0]) return $mxIp;
+        if ($mxIp !== $mxhosts[0]) {
+            return $mxIp;
+        }
     }
-    return false;
+    
+    // Fallback to A record
+    $aRecord = @gethostbyname($domain);
+    return ($aRecord !== $domain) ? $aRecord : false;
 }
 
+// Main processing
 function processDomains($conn) {
-    $batchSize = 500;
+    $batchSize = 500; // Larger batch size for efficiency
     $totalProcessed = 0;
 
+    consoleOutput("Starting optimized domain verification...");
+
+    // Prepare statements
     $selectStmt = $conn->prepare("
         SELECT id, sp_domain 
         FROM emails 
@@ -48,9 +58,10 @@ function processDomains($conn) {
         WHERE id = ?
     ");
 
-    $conn->autocommit(false);
+    $conn->autocommit(false); // Faster transactions
 
     do {
+        // Fetch batch
         $selectStmt->bind_param("i", $batchSize);
         $selectStmt->execute();
         $result = $selectStmt->get_result();
@@ -62,49 +73,62 @@ function processDomains($conn) {
 
         if (empty($domains)) break;
 
+        // Process batch
         foreach ($domains as $domain) {
-            $ip = getDomainIP($domain['sp_domain']);
+            $ip = false;
+            
+            // Basic hostname validation
+            if (filter_var($domain['sp_domain'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+                $ip = getDomainIP($domain['sp_domain']);
+            }
+            
             $status = $ip ? 1 : 0;
-            $response = $ip ?: 'No MX records found';
+            $response = $ip ?: 'No records Found';
             
             $updateStmt->bind_param("isi", $status, $response, $domain['id']);
             $updateStmt->execute();
+            
             $totalProcessed++;
         }
 
         $conn->commit();
-        consoleOutput("Processed: $totalProcessed domains");
+        
+        consoleOutput(sprintf(
+            "Processed: %d | Total: %d",
+            count($domains),
+            $totalProcessed
+        ));
+
     } while (true);
 
     $conn->autocommit(true);
     return $totalProcessed;
 }
 
-function startBackgroundSmtpVerification() {
-    $phpPath = 'C:\xampp\php\php.exe';
-    $scriptPath = 'C:\xampp\htdocs\email\verify_smtp.php';
-    $cmd = "cmd /c start \"\" \"$phpPath\" \"$scriptPath\"";
-    pclose(popen($cmd, 'r'));
-}
-
 try {
-    if ($conn->connect_error) throw new Exception("Database connection failed");
+    if ($conn->connect_error) {
+        throw new Exception("Database connection failed");
+    }
 
     $start = microtime(true);
     $processed = processDomains($conn);
-    
-    // Start SMTP verification in background
-    startBackgroundSmtpVerification();
+    $time = microtime(true) - $start;
 
     echo json_encode([
         "status" => "success",
-        "dns_processed" => $processed,
-        "message" => "DNS verification completed. SMTP verification started in background."
+        "processed" => $processed,
+        "time_seconds" => round($time, 2),
+        "rate_per_second" => round($processed/$time, 2)
     ]);
 
 } catch (Exception $e) {
-    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    $conn->rollback();
+    echo json_encode([
+        "status" => "error",
+        "message" => $e->getMessage()
+    ]);
 }
 
 $conn->close();
+
 ?>
