@@ -210,9 +210,9 @@ function handlePostRequest()
     $conn->commit();
     fclose($handle);
 
-    if ($inserted_count > 0) {
-        startBackgroundDomainVerification();
-    }
+    // if ($inserted_count > 0) {
+    //     startBackgroundDomainVerification();
+    // }
 
     return [
         "status" => "success",

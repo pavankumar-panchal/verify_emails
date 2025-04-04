@@ -12,7 +12,7 @@ ini_set('log_errors', 1);
 set_time_limit(0);
 ini_set('memory_limit', '512M');
 
-// Enhanced console output with colors
+// Enhanced console output
 function consoleOutput($message, $type = 'INFO') {
     $colors = [
         'INFO' => "\033[36m",  // Cyan
@@ -31,11 +31,46 @@ function consoleOutput($message, $type = 'INFO') {
     }
 }
 
-// Perform complete SMTP verification exactly like telnet
-function verifySmtp($domain, $ip, $testEmail) {
-    if (empty($ip) || empty($testEmail)) {
-        consoleOutput("Invalid parameters for SMTP check", 'ERROR');
-        return ['valid' => false, 'response' => 'Invalid parameters'];
+// Check if domain is excluded
+function isExcludedDomain($domain, $conn) {
+    $stmt = $conn->prepare("SELECT 1 FROM exclude_domains WHERE domain = ?");
+    $stmt->bind_param("s", $domain);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
+}
+
+// Get MX or A record IP for a domain
+function getDomainIP($domain, $conn) {
+    // First check if domain is excluded
+    if (isExcludedDomain($domain, $conn)) {
+        // Get IP from exclude_domains table if available
+        $stmt = $conn->prepare("SELECT ip_address FROM exclude_domains WHERE domain = ?");
+        $stmt->bind_param("s", $domain);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            return trim($row['ip_address']);
+        }
+        return false;
+    }
+
+    // Check MX records first
+    if (getmxrr($domain, $mxhosts)) {
+        $mxIp = @gethostbyname($mxhosts[0]);
+        if ($mxIp !== $mxhosts[0]) {
+            return $mxIp;
+        }
+    }
+    
+    // Fallback to A record
+    $aRecord = @gethostbyname($domain);
+    return ($aRecord !== $domain) ? $aRecord : false;
+}
+
+// Perform SMTP verification
+function verifySmtp($domain, $ip, $email) {
+    if (empty($ip)) {
+        return ['valid' => false, 'response' => 'No IP address found'];
     }
 
     $smtp_port = 25;
@@ -44,113 +79,97 @@ function verifySmtp($domain, $ip, $testEmail) {
 
     try {
         // 1. Connect to SMTP server
-        consoleOutput("Connecting to $ip:$smtp_port...", 'SMTP');
         $smtp = @fsockopen($ip, $smtp_port, $errno, $errstr, $timeout);
         if (!$smtp) {
-            consoleOutput("Connection failed: $errstr ($errno)", 'ERROR');
-            return ['valid' => false, 'response' => "Connection failed: $errstr"];
+            return ['valid' => false, 'response' => "Connection failed: $errstr ($errno)"];
         }
         
         stream_set_timeout($smtp, $timeout);
-        $responseLog[] = "Connected to $ip:$smtp_port";
         
         // 2. Check welcome message (220)
         $response = fgets($smtp, 4096);
-        consoleOutput("Server: " . trim($response), 'SMTP');
         $responseLog[] = "Server: " . trim($response);
         if (substr($response, 0, 3) != '220') {
             fclose($smtp);
-            consoleOutput("Invalid welcome response", 'ERROR');
-            return ['valid' => false, 'response' => "Invalid welcome response"];
+            return ['valid' => false, 'response' => "Invalid welcome response: " . trim($response)];
         }
         
         // 3. Send EHLO
         $ehlo = "EHLO server.relyon.co.in";
         fputs($smtp, "$ehlo\r\n");
         $response = fgets($smtp, 4096);
-        consoleOutput("$ehlo => " . trim($response), 'SMTP');
         $responseLog[] = "$ehlo => " . trim($response);
         if (substr($response, 0, 3) != '250') {
             fclose($smtp);
-            consoleOutput("EHLO command failed", 'ERROR');
-            return ['valid' => false, 'response' => "EHLO failed"];
+            return ['valid' => false, 'response' => "EHLO failed: " . trim($response)];
         }
         
         // 4. MAIL FROM command
         $mailFrom = "MAIL FROM: <info@relyon.co.in>";
         fputs($smtp, "$mailFrom\r\n");
         $response = fgets($smtp, 4096);
-        consoleOutput("$mailFrom => " . trim($response), 'SMTP');
         $responseLog[] = "$mailFrom => " . trim($response);
         if (substr($response, 0, 3) != '250') {
             fclose($smtp);
-            consoleOutput("MAIL FROM command failed", 'ERROR');
-            return ['valid' => false, 'response' => "MAIL FROM failed"];
+            return ['valid' => false, 'response' => "MAIL FROM failed: " . trim($response)];
         }
         
         // 5. RCPT TO command (the actual verification)
-        $rcptTo = "RCPT TO: <$testEmail>";
+        $rcptTo = "RCPT TO: <$email>";
         fputs($smtp, "$rcptTo\r\n");
         $response = fgets($smtp, 4096);
         $responseText = trim($response);
-        consoleOutput("$rcptTo => $responseText", 'SMTP');
         $responseLog[] = "$rcptTo => $responseText";
         
         // Check response codes
-        $isValid = (substr($response, 0, 3) == '250'); // 550 would be invalid
+        $isValid = (substr($response, 0, 3) == '250');
         
         // 6. QUIT command
         $quit = "QUIT";
         fputs($smtp, "$quit\r\n");
         fclose($smtp);
-        consoleOutput("$quit => Connection closed", 'SMTP');
         $responseLog[] = "$quit => Connection closed";
         
-        if ($isValid) {
-            consoleOutput("Email $testEmail is VALID", 'SUCCESS');
-            return ['valid' => true, 'response' => implode("\n", $responseLog)];
-        } else {
-            consoleOutput("Email $testEmail is INVALID", 'ERROR');
-            return ['valid' => false, 'response' => implode("\n", $responseLog)];
-        }
+        return [
+            'valid' => $isValid,
+            'response' => implode("\n", $responseLog),
+            'ip' => $ip
+        ];
         
     } catch (Exception $e) {
-        consoleOutput("Exception: " . $e->getMessage(), 'ERROR');
         return ['valid' => false, 'response' => "Exception: " . $e->getMessage()];
     }
 }
 
 // Main processing function
-function processSmtpVerification($conn) {
-    $batchSize = 50; // Smaller batch for better logging
-    $processed = 0;
-    $validEmails = 0;
+function processDomains($conn) {
+    $batchSize = 50;
+    $totalProcessed = 0;
+    $validDomains = 0;
 
-    consoleOutput("Starting SMTP email verification process", 'INFO');
+    consoleOutput("Starting domain verification process");
 
+    // Prepare statements
     $selectStmt = $conn->prepare("
-        SELECT id, sp_domain, sp_email, validation_response 
+        SELECT id, raw_emailid, sp_account, sp_domain 
         FROM emails 
-        WHERE domain_status = 1 
-          AND domain_verified = 1
-          AND email_verified = 0
-          AND validation_response NOT LIKE 'No MX records found'
+        WHERE domain_verified = 0 
         ORDER BY id ASC 
         LIMIT ?
     ");
     
     $updateStmt = $conn->prepare("
         UPDATE emails 
-        SET email_verified = 1, 
-            email_status = ?,
-            email_response = ?,
-            verification_time = NOW()
+        SET domain_verified = 1, 
+            domain_status = ?, 
+            validation_response = ? 
         WHERE id = ?
     ");
 
     $conn->autocommit(false);
 
     do {
+        // Fetch batch
         $selectStmt->bind_param("i", $batchSize);
         $selectStmt->execute();
         $result = $selectStmt->get_result();
@@ -161,35 +180,50 @@ function processSmtpVerification($conn) {
         }
 
         if (empty($emails)) {
-            consoleOutput("No more emails to verify", 'INFO');
+            consoleOutput("No more domains to process", 'INFO');
             break;
         }
 
-        consoleOutput("Processing batch of " . count($emails) . " emails", 'INFO');
+        consoleOutput("Processing batch of " . count($emails) . " domains", 'INFO');
         
         foreach ($emails as $email) {
             $domain = $email['sp_domain'];
-            $emailAddr = $email['sp_email'];
-            $ip = $email['validation_response']; // IP from DNS verification
+            $emailAddr = $email['raw_emailid'];
             
-            consoleOutput("Verifying $emailAddr (Domain: $domain, IP: $ip)", 'INFO');
+            consoleOutput("Processing $emailAddr (Domain: $domain)", 'INFO');
             
-            $result = verifySmtp($domain, $ip, $emailAddr);
+            // Get IP for domain (checks excluded domains first)
+            $ip = getDomainIP($domain, $conn);
             
-            $status = $result['valid'] ? 1 : 0;
-            if ($result['valid']) $validEmails++;
+            if ($ip) {
+                // Perform SMTP verification
+                $result = verifySmtp($domain, $ip, $emailAddr);
+                $status = $result['valid'] ? 1 : 0;
+                $response = $result['valid'] ? $result['ip'] : $result['response'];
+                
+                if ($result['valid']) {
+                    $validDomains++;
+                    consoleOutput("Domain $domain is VALID (IP: $ip)", 'SUCCESS');
+                } else {
+                    consoleOutput("Domain $domain is INVALID: " . $result['response'], 'ERROR');
+                }
+            } else {
+                $status = 0;
+                $response = 'No MX records found';
+                consoleOutput("No DNS records found for $domain", 'ERROR');
+            }
             
-            $updateStmt->bind_param("isi", $status, $result['response'], $email['id']);
+            $updateStmt->bind_param("isi", $status, $response, $email['id']);
             $updateStmt->execute();
-            $processed++;
+            $totalProcessed++;
         }
 
         $conn->commit();
-        consoleOutput("Batch completed. Total: $processed | Valid: $validEmails", 'INFO');
+        consoleOutput("Batch completed. Total: $totalProcessed | Valid: $validDomains", 'INFO');
     } while (true);
 
     $conn->autocommit(true);
-    return ['total' => $processed, 'valid' => $validEmails];
+    return ['total' => $totalProcessed, 'valid' => $validDomains];
 }
 
 try {
@@ -198,14 +232,14 @@ try {
     }
 
     $start = microtime(true);
-    $result = processSmtpVerification($conn);
+    $result = processDomains($conn);
     $time = microtime(true) - $start;
 
     echo json_encode([
         "status" => "success",
         "total_processed" => $result['total'],
-        "valid_emails" => $result['valid'],
-        "invalid_emails" => $result['total'] - $result['valid'],
+        "valid_domains" => $result['valid'],
+        "invalid_domains" => $result['total'] - $result['valid'],
         "time_seconds" => round($time, 2),
         "rate_per_second" => round($result['total']/$time, 2)
     ]);

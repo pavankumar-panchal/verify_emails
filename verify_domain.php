@@ -36,6 +36,7 @@ function processDomains($conn) {
         SELECT id, sp_domain 
         FROM emails 
         WHERE domain_verified = 0 
+        AND domain_status = 1
         ORDER BY id ASC 
         LIMIT ?
     ");
@@ -107,4 +108,4 @@ try {
 }
 
 $conn->close();
-?>
+?>87654
