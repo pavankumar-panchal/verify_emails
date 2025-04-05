@@ -210,9 +210,9 @@ function handlePostRequest()
     $conn->commit();
     fclose($handle);
 
-    if ($inserted_count > 0) {
-        startBackgroundDomainVerification();
-    }
+    // if ($inserted_count > 0) {
+    //     startBackgroundDomainVerification();
+    // }
 
     return [
         "status" => "success",
@@ -233,18 +233,21 @@ function handlePostRequest()
 //     }
 // }
 
-function startBackgroundDomainVerification()
-{
-    $phpPath = 'C:\xampp\php\php.exe';
-    $scriptPath = 'C:\xampp\htdocs\email\verify_domain.php'; // full path to your script
 
-    // Run the command in a new CMD window in the background
-    $cmd = "cmd /c start \"\" \"$phpPath\" \"$scriptPath\"";
 
-    if (function_exists('pclose') && function_exists('popen')) {
-        pclose(popen($cmd, 'r'));
-    }
-}
+// ----------------------------------------------------
+// function startBackgroundDomainVerification()
+// {
+//     $phpPath = 'C:\xampp\php\php.exe';
+//     $scriptPath = 'C:\xampp\htdocs\email\verify_domain.php'; // full path to your script
+
+//     // Run the command in a new CMD window in the background
+//     $cmd = "cmd /c start \"\" \"$phpPath\" \"$scriptPath\"";
+
+//     if (function_exists('pclose') && function_exists('popen')) {
+//         pclose(popen($cmd, 'r'));
+//     }
+// }
 
 
 
