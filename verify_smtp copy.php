@@ -66,7 +66,7 @@ function processEmails() {
     global $conn;
 
     echo "🔍 Fetching all emails...\n";
-    $query = "SELECT id, raw_emailid, sp_domain FROM emails WHERE domain_status=1";
+    $query = "SELECT id, raw_emailid, sp_domain FROM emails";
     $result = $conn->query($query);
 
     if (!$result) {

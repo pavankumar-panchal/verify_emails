@@ -83,11 +83,26 @@ function getExcludedDomainsWithIPs()
 
 
 
-function isValidAccountName($account, $domain)
+function isValidAccountName($account)
 {
-    return preg_match('/^[a-z0-9._-]+$/i', $account) &&
-        strlen($account) >= 1 && strlen($account) <= 64;
+    // 1. Basic pattern match
+    if (!preg_match('/^[a-z0-9](?!.*[._-]{2})[a-z0-9._-]*[a-z0-9]$/i', $account)) {
+        return false;
+    }
+
+    // 2. Length check
+    if (strlen($account) < 1 || strlen($account) > 64) {
+        return false;
+    }
+
+    // 3. Not all digits
+    if (preg_match('/^[0-9]+$/', $account)) {
+        return false;
+    }
+
+    return true;
 }
+
 
 
 function normalizeGmail($email)

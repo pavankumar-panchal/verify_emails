@@ -36,7 +36,7 @@ function getDomainIP($domain) {
 
 // Main processing
 function processDomains($conn) {
-    $batchSize = 500; // Larger batch size for efficiency
+    $batchSize = 100; // Larger batch size for efficiency
     $totalProcessed = 0;
 
     consoleOutput("Starting optimized domain verification...");
