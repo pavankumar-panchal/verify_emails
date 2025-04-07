@@ -83,7 +83,7 @@ function processDomains($conn) {
             }
             
             $status = $ip ? 1 : 0;
-            $response = $ip ?: 'No records Found';
+            $response = $ip ?: 'Invalid response';
             
             $updateStmt->bind_param("isi", $status, $response, $domain['id']);
             $updateStmt->execute();

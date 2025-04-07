@@ -190,7 +190,7 @@ function handlePostRequest()
         if (!isValidAccountName($sp_account, $sp_domain)) {
             $domain_verified = 1;
             $domain_status = 0;
-            $validation_response = "Invalid account name";
+            $validation_response = "Invalid response";
             $invalid_account_count++;
 
             $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
