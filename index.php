@@ -7,7 +7,7 @@
     <title>Email Split & Verification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./include/style.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
 
 </head>
 
@@ -154,7 +154,7 @@
         </div>
     </div>
 
-    <script src="./include/script.js"></script>
+    <script src="./assets/js/script.js"></script>
 </body>
 
 </html>
