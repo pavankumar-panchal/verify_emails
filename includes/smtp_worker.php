@@ -1,5 +1,8 @@
 <?php
-    require __DIR__.'/db.php';
+    require __DIR__ . '/../db.php';
+
+
+
     $offset = $argv[1] ?? 0;
     $limit = $argv[2] ?? 100;
     

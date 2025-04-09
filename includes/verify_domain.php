@@ -131,4 +131,6 @@ try {
 
 $conn->close();
 
+require_once 'verify_smtp.php';
+
 ?>

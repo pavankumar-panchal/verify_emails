@@ -97,7 +97,7 @@ async function fetchEmails() {
     showLoadingState();
 
     try {
-        const response = await fetch('./includes/email_processor.php');
+        const response = await fetch('email_processor.php');
         if (!response.ok) throw new Error('Network response was not ok');
 
         const data = await response.json();
@@ -259,7 +259,7 @@ async function handleFileUpload(event) {
     const formData = new FormData(document.getElementById("csvForm"));
 
     try {
-        const response = await fetch('./includes/email_processor.php', {
+        const response = await fetch('email_processor.php', {
             method: 'POST',
             body: formData
         });
@@ -297,7 +297,7 @@ async function deleteEmail(id, button) {
     }
 
     try {
-        const response = await fetch(`./includes/email_processor.php?id=${id}`, {
+        const response = await fetch(`email_processor.php?id=${id}`, {
             method: 'DELETE',
             headers: { 'Accept': 'application/json' }
         });
