@@ -7,7 +7,7 @@
     <title>Email Split & Verification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./include/style.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
 
 </head>
 
@@ -53,6 +53,7 @@
                             class="pl-10 border border-gray-300 p-2 rounded-md w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="flex gap-2">
+                      
                         <button id="exportValidBtn"
                             class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center">
                             <i class="fas fa-file-export mr-2"></i>Export Valid
@@ -153,7 +154,7 @@
         </div>
     </div>
 
-    <script src="./include/script.js"></script>
+    <script src="./assets/js/script.js"></script>
 </body>
 
 </html>
