@@ -4,7 +4,7 @@ require 'db.php';
 global $conn;
 
 // Configuration
-define('MAX_WORKERS', 8); // Number of parallel processes
+define('MAX_WORKERS', 2); // Number of parallel processes
 define('BATCH_SIZE', 100); // Emails per worker
 define('WORKER_SCRIPT', __DIR__ . '/smtp_worker.php');
 
@@ -82,7 +82,10 @@ function verifyEmailViaSMTP($email, $domain)
 function createWorkerScript()
 {
     $workerCode = '<?php
-    require __DIR__.\'/db.php\';
+    require __DIR__ . \'/../db.php\';
+
+
+
     $offset = $argv[1] ?? 0;
     $limit = $argv[2] ?? ' . BATCH_SIZE . ';
     
