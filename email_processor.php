@@ -239,10 +239,11 @@ function handlePostRequest()
     ];
 }
 
-function startBackgroundDomainVerification() {
+function startBackgroundDomainVerification()
+{
     // Get the absolute path to the verify_domain.php script
     $scriptPath = realpath(__DIR__ . '/includes/verify_domain.php');
-    
+
     if (!$scriptPath) {
         error_log("verify_domain.php not found.");
         return;
@@ -268,24 +269,6 @@ function startBackgroundDomainVerification() {
         error_log("Failed to start background process for verify_domain.php");
     }
 }
-
-
-
-
-// ----------------------------------------------------
-// function startBackgroundDomainVerification()
-// {
-//     $phpPath = 'C:\xampp\php\php.exe';
-//     $scriptPath = 'C:\xampp\htdocs\email\verify_domain.php'; // full path to your script
-
-//     // Run the command in a new CMD window in the background
-//     $cmd = "cmd /c start \"\" \"$phpPath\" \"$scriptPath\"";
-
-//     if (function_exists('pclose') && function_exists('popen')) {
-//         pclose(popen($cmd, 'r'));
-//     }
-// }
-
 
 
 function handleGetRequest()

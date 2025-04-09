@@ -82,8 +82,7 @@ function verifyEmailViaSMTP($email, $domain)
 function createWorkerScript()
 {
     $workerCode = '<?php
-    require __DIR__ . \'/../db.php\';
-
+    require __DIR__ . \'/../includes/db.php\';
 
 
     $offset = $argv[1] ?? 0;

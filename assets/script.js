@@ -1,4 +1,3 @@
-// Global variables
 let emailsData = [];
 let currentPage = 1;
 let rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
@@ -395,3 +394,4 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("nextPage").click();
     }, 100); // Ensures the button is fully loaded before clicking
 });
+

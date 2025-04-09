@@ -8,10 +8,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./assets/style.css">
-  
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
 </head>
 
 <body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
+
+
     <div class="mt-10 w-full max-w-6xl">
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
             <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
@@ -19,6 +24,10 @@
 
         <!-- File Upload Section -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+
+            <!-- Progress Section -->
+
+
             <form id="csvForm" class="flex flex-col items-center w-full" enctype="multipart/form-data">
                 <div class="w-full max-w-md mb-4">
                     <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
@@ -33,6 +42,9 @@
                 </button>
             </form>
             <div id="statusMessage" class="hidden mt-4 text-center p-3 rounded-md"></div>
+
+
+
         </div>
 
         <!-- Search and Controls Section -->
@@ -153,7 +165,8 @@
         </div>
     </div>
 
-   
+
+
     <script src="./assets/script.js"></script>
 </body>
 

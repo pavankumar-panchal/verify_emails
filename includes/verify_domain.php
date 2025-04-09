@@ -13,14 +13,16 @@ set_time_limit(0);
 ini_set('memory_limit', '512M');
 
 // Command line output
-function consoleOutput($message) {
+function consoleOutput($message)
+{
     if (php_sapi_name() === 'cli') {
         echo $message . PHP_EOL;
     }
 }
 
 // Get first IP for a domain (MX or A record)
-function getDomainIP($domain) {
+function getDomainIP($domain)
+{
     // Check MX records first
     if (getmxrr($domain, $mxhosts)) {
         $mxIp = @gethostbyname($mxhosts[0]);
@@ -28,14 +30,15 @@ function getDomainIP($domain) {
             return $mxIp;
         }
     }
-    
+
     // Fallback to A record
     $aRecord = @gethostbyname($domain);
     return ($aRecord !== $domain) ? $aRecord : false;
 }
 
 // Main processing
-function processDomains($conn) {
+function processDomains($conn)
+{
     $batchSize = 100; // Larger batch size for efficiency
     $totalProcessed = 0;
 
@@ -49,7 +52,7 @@ function processDomains($conn) {
         ORDER BY id ASC 
         LIMIT ?
     ");
-    
+
     $updateStmt = $conn->prepare("
         UPDATE emails 
         SET domain_verified = 1, 
@@ -71,28 +74,29 @@ function processDomains($conn) {
             $domains[] = $row;
         }
 
-        if (empty($domains)) break;
+        if (empty($domains))
+            break;
 
         // Process batch
         foreach ($domains as $domain) {
             $ip = false;
-            
+
             // Basic hostname validation
             if (filter_var($domain['sp_domain'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
                 $ip = getDomainIP($domain['sp_domain']);
             }
-            
+
             $status = $ip ? 1 : 0;
             $response = $ip ?: 'Invalid response';
-            
+
             $updateStmt->bind_param("isi", $status, $response, $domain['id']);
             $updateStmt->execute();
-            
+
             $totalProcessed++;
         }
 
         $conn->commit();
-        
+
         consoleOutput(sprintf(
             "Processed: %d | Total: %d",
             count($domains),
@@ -118,7 +122,7 @@ try {
         "status" => "success",
         "processed" => $processed,
         "time_seconds" => round($time, 2),
-        "rate_per_second" => round($processed/$time, 2)
+        "rate_per_second" => round($processed / $time, 2)
     ]);
 
 } catch (Exception $e) {
