@@ -1,10 +1,10 @@
 <?php
 // Database connection
-require 'db.php';
+require './db.php';
 global $conn;
 
 // Configuration
-define('MAX_WORKERS', 2); // Number of parallel processes
+define('MAX_WORKERS', 50); // Number of parallel processes
 define('BATCH_SIZE', 100); // Emails per worker
 define('WORKER_SCRIPT', __DIR__ . '/smtp_worker.php');
 
@@ -82,7 +82,8 @@ function verifyEmailViaSMTP($email, $domain)
 function createWorkerScript()
 {
     $workerCode = '<?php
-    require __DIR__ . \'/../includes/db.php\';
+    require __DIR__ . \'/../db.php\';
+
 
 
     $offset = $argv[1] ?? 0;
@@ -225,7 +226,8 @@ function processEmailsInParallel()
 }
 
 // Function to reset processed status if needed
-function resetProcessedStatus() {
+function resetProcessedStatus()
+{
     global $conn;
     $conn->query("UPDATE emails SET domain_processed = 0");
     echo "Reset processing status for all domains.\n";
@@ -238,11 +240,11 @@ try {
 
     // Uncomment the next line if you need to reset processing status
     // resetProcessedStatus();
-    
+
     processEmailsInParallel();
 
     echo "\nProcessing complete!\n";
-  
+
 } catch (Exception $e) {
     echo " Error: " . $e->getMessage() . "\n";
 } finally {

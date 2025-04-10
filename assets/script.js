@@ -1,3 +1,5 @@
+
+
 let emailsData = [];
 let currentPage = 1;
 let rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
@@ -282,6 +284,7 @@ async function handleFileUpload(event) {
         document.getElementById("csvForm").reset();
     }
 }
+
 
 async function deleteEmail(id, button) {
     if (!confirm("Are you sure you want to delete this email record?")) return;

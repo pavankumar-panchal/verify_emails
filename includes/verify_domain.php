@@ -3,7 +3,12 @@ header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");
 
-require 'db.php';
+require './db.php';
+
+// Configuration
+define('MAX_WORKERS', 50); // Number of parallel processes
+define('BATCH_SIZE', 100); // Domains per worker
+define('WORKER_SCRIPT', __DIR__ . '/domain_worker.php');
 
 // Optimization settings
 error_reporting(0);
@@ -36,105 +41,133 @@ function getDomainIP($domain)
     return ($aRecord !== $domain) ? $aRecord : false;
 }
 
-// Main processing
-function processDomains($conn)
+// Create worker script for parallel processing
+function createDomainWorkerScript()
 {
-    $batchSize = 100; // Larger batch size for efficiency
-    $totalProcessed = 0;
-
-    consoleOutput("Starting optimized domain verification...");
-
-    // Prepare statements
-    $selectStmt = $conn->prepare("
-        SELECT id, sp_domain 
-        FROM emails 
-        WHERE domain_verified = 0 
-        ORDER BY id ASC 
-        LIMIT ?
-    ");
-
-    $updateStmt = $conn->prepare("
-        UPDATE emails 
-        SET domain_verified = 1, 
-            domain_status = ?, 
-            validation_response = ? 
-        WHERE id = ?
-    ");
-
-    $conn->autocommit(false); // Faster transactions
-
-    do {
-        // Fetch batch
-        $selectStmt->bind_param("i", $batchSize);
-        $selectStmt->execute();
-        $result = $selectStmt->get_result();
-
-        $domains = [];
-        while ($row = $result->fetch_assoc()) {
-            $domains[] = $row;
+    $workerCode = '<?php
+    require __DIR__ . \'/../db.php\';
+    
+    $offset = $argv[1] ?? 0;
+    $limit = $argv[2] ?? ' . BATCH_SIZE . ';
+    
+    // Only process domains that need verification
+    $domains = $conn->query("SELECT id, sp_domain FROM emails WHERE domain_verified = 0 LIMIT $offset, $limit");
+    
+    while ($row = $domains->fetch_assoc()) {
+        $domain = $row[\'sp_domain\'];
+        $ip = false;
+        
+        // Basic hostname validation
+        if (filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+            $ip = getDomainIP($domain);
         }
-
-        if (empty($domains))
-            break;
-
-        // Process batch
-        foreach ($domains as $domain) {
-            $ip = false;
-
-            // Basic hostname validation
-            if (filter_var($domain['sp_domain'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-                $ip = getDomainIP($domain['sp_domain']);
+        
+        $status = $ip ? 1 : 0;
+        $response = $ip ?: "Invalid responce";
+        
+        $conn->query("UPDATE emails SET 
+                     domain_verified = 1,
+                     domain_status = $status,
+                     validation_response = \'" . $conn->real_escape_string($response) . "\'
+                     WHERE id = {$row[\'id\']}");
+    }
+    
+    function getDomainIP($domain) {
+        // Check MX records first
+        if (getmxrr($domain, $mxhosts)) {
+            $mxIp = @gethostbyname($mxhosts[0]);
+            if ($mxIp !== $mxhosts[0]) {
+                return $mxIp;
             }
-
-            $status = $ip ? 1 : 0;
-            $response = $ip ?: 'Invalid response';
-
-            $updateStmt->bind_param("isi", $status, $response, $domain['id']);
-            $updateStmt->execute();
-
-            $totalProcessed++;
         }
+    
+        // Fallback to A record
+        $aRecord = @gethostbyname($domain);
+        return ($aRecord !== $domain) ? $aRecord : false;
+    }
+    ?>';
 
-        $conn->commit();
-
-        consoleOutput(sprintf(
-            "Processed: %d | Total: %d",
-            count($domains),
-            $totalProcessed
-        ));
-
-    } while (true);
-
-    $conn->autocommit(true);
-    return $totalProcessed;
+    file_put_contents(WORKER_SCRIPT, $workerCode);
 }
 
+// Parallel processing function
+function processDomainsInParallel()
+{
+    global $conn;
+
+    if (!file_exists(WORKER_SCRIPT)) {
+        createDomainWorkerScript();
+    }
+
+    // Count unverified domains
+    $total = $conn->query("SELECT COUNT(*) FROM emails WHERE domain_verified = 0")->fetch_row()[0];
+    consoleOutput("Total domains to process: $total");
+
+    if ($total == 0) {
+        consoleOutput("All domains have already been verified.");
+        return 0;
+    }
+
+    $batches = ceil($total / BATCH_SIZE);
+    $workers = min(MAX_WORKERS, $batches);
+    $procs = [];
+    $processed = 0;
+
+    for ($i = 0; $i < $batches; $i++) {
+        $offset = $i * BATCH_SIZE;
+        $cmd = "php " . WORKER_SCRIPT . " $offset " . BATCH_SIZE;
+        $procs[] = proc_open($cmd, [], $pipes);
+
+        if (count($procs) >= $workers) {
+            proc_close(array_shift($procs));
+            $processed += BATCH_SIZE;
+            consoleOutput("Processed: $processed of $total");
+        }
+    }
+
+    while (count($procs) > 0) {
+        proc_close(array_shift($procs));
+        $processed += BATCH_SIZE;
+        consoleOutput("Processed: $processed of $total");
+    }
+
+    return $processed;
+}
+
+// Main execution
 try {
     if ($conn->connect_error) {
         throw new Exception("Database connection failed");
     }
 
     $start = microtime(true);
-    $processed = processDomains($conn);
+    $processed = processDomainsInParallel();
     $time = microtime(true) - $start;
+
+    // Get total count for response
+    $totalResult = $conn->query("SELECT COUNT(*) as total FROM emails");
+    $total = $totalResult->fetch_assoc()['total'];
 
     echo json_encode([
         "status" => "success",
         "processed" => $processed,
+        "total" => $total,
         "time_seconds" => round($time, 2),
         "rate_per_second" => round($processed / $time, 2)
     ]);
 
 } catch (Exception $e) {
-    $conn->rollback();
     echo json_encode([
         "status" => "error",
         "message" => $e->getMessage()
     ]);
 }
 
+
+
+
 $conn->close();
 
-require_once 'verify_smtp.php';
+exec('php /opt/lampp/htdocs/email/includes/verify_smtp.php > /dev/null 2>&1 &');
 
 ?>
