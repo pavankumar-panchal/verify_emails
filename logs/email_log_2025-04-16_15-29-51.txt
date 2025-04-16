@@ -1,0 +1,4 @@
+Bulk email sending started at 2025-04-16 15:29:51
+Sending completed at 2025-04-16 15:30:47
+Total sent: 12
+Total failed: 0
