@@ -1,0 +1,10 @@
+Bulk email sending started at 2025-04-15 12:54:31
+
+SUCCESS: Sent to 00ar.khan@gmail.com
+SUCCESS: Sent to 0107sjain@gmail.com
+SUCCESS: Sent to panchalpavan800@gmail.com
+SUCCESS: Sent to panchalpavan515@gmail.com
+
+Sending completed at 2025-04-15 12:54:50
+Total sent: 4
+Total failed: 0

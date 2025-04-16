@@ -51,9 +51,13 @@ try {
 }
 
 // Close connection and flush buffer
+$cmd = "nohup php -q includes/verify_domain.php > /dev/null 2>&1 & echo $!";
+$pid = shell_exec($cmd);
+
 $conn->close();
 ob_end_flush();
 exit;
+
 
 function getExcludedAccounts()
 {
@@ -242,7 +246,7 @@ function handlePostRequest()
 function startBackgroundDomainVerification()
 {
     // Get the absolute path to the verify_domain.php script
-    $scriptPath = realpath(__DIR__ . '/includes/verify_domain.php');
+    $scriptPath = realpath(__DIR__ . './includes/verify_domain.php');
 
     if (!$scriptPath) {
         error_log("verify_domain.php not found.");

@@ -7,10 +7,63 @@
     <title>Email Split & Verification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./assets/style.css">
+    <link rel="stylesheet" href="assets/style.css">
+
 
     <style>
-        /* Add these styles to your CSS */
+        /* Navbar styles */
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: #f3f4f6;
+        }
+
+        .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .nav-link.active:hover {
+            background-color: #2563eb;
+        }
+
+        /* Progress overlay styles */
         .progress-overlay {
             position: fixed;
             top: 0;
@@ -72,10 +125,30 @@
         .hidden {
             display: none !important;
         }
+
+        /* Adjust main content to account for fixed navbar */
+        .main-content {
+            margin-top: 80px;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-brand">
+                <i class="fas fa-envelope mr-2"></i>Email
+            </a>
+            <div class="navbar-links">
+                <a href="#" class="nav-link active">
+                    <i class="fas fa-check-circle mr-2"></i>Verification
+                </a>
+                <a href="send_form.php" class="nav-link">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Emails
+                </a>
+            </div>
+        </div>
+    </nav>
 
     <div id="progressOverlay" class="progress-overlay hidden">
         <div class="circle-loader">
@@ -90,10 +163,10 @@
     </div>
 
 
-    <div class="mt-10 w-full max-w-6xl">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
+    <div class="mt-20 w-full max-w-6xl">
+        <!-- <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
             <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
-        </h2>
+        </h2> -->
         <!-- File Upload Section -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
 
@@ -105,16 +178,25 @@
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     <p class="mt-1 text-xs text-gray-500"></p>
                 </div>
-                <button type="submit" id="uploadBtn" onclick="fetchProgress()"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center min-w-[150px]">
-                    <span id="uploadText" >Upload & Process</span>
-                    <div id="uploadSpinner" class="loader ml-2 hidden"></div>
-                </button>
+
+                <!-- Buttons in a row -->
+                <div class="flex space-x-4 mb-3">
+                    <!-- Upload & Process Button -->
+                    <button type="submit" id="uploadBtn"
+                        onclick="triggerDomainVerification(),fetchProgress(),checkVerificationConfirmation()"
+                        class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition flex items-center justify-center min-w-[150px]">
+                        <span id="uploadText">Upload & Process</span>
+                        <div id="uploadSpinner" class="loader ml-2 hidden"></div>
+                    </button>
+
+
+                </div>
             </form>
+
+
             <div id="statusMessage" class="hidden mt-4 text-center p-3 rounded-md"></div>
         </div>
 
-        <!-- Search and Controls Section -->
         <div class="bg-white p-4 rounded-lg shadow-md mb-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -235,6 +317,27 @@
     </div>
 
     <script>
+
+
+        function triggerDomainVerification() {
+            fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showStatusMessage("Verification process started!", "success");
+                        setTimeout(() => {
+                            fetchProgress();  // Start checking progress after 5 seconds
+                        }, 5000);
+                    } else {
+                        showStatusMessage("Error starting verification process.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error triggering domain verification:", error);
+                    showStatusMessage("Error triggering domain verification.", "error");
+                });
+        }
+
         // Progress Tracking
 
         const progressOverlay = document.getElementById('progressOverlay');
@@ -397,9 +500,32 @@
                 clearInterval(progressInterval);
             }
         });
+        function checkVerificationConfirmation() {
+            fetch('includes/domain_verify_log.txt?rand=' + Math.random())
+                .then(response => response.text())
+                .then(log => {
+                    if (log.includes("Script Triggered")) {
+                        alert('✅ verify_domain.php was actually executed.');
+                    } else {
+                        alert('❌ Script not yet executed.');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('❌ Could not check domain verification status.');
+                });
+        }
+
+
+
+
     </script>
 
     <script src="./assets/script.js"></script>
+
+
+
+
 </body>
 
 </html>

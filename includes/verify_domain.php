@@ -1,4 +1,13 @@
 <?php
+// file_put_contents(__DIR__ . '/domain_verify_log.txt', date('Y-m-d H:i:s') . " - Script Triggered\n", FILE_APPEND);
+file_put_contents('/opt/lampp/htdocs/email/includes/domain_verify_log.txt', "Checking domains at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+
+// Add your domain verification logic here
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");
@@ -167,7 +176,9 @@ try {
 
 
 $conn->close();
+file_put_contents('/opt/lampp/htdocs/email/includes/domain_verify_log.txt', "Completed domain verification at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
 
-exec('php /opt/lampp/htdocs/email/includes/verify_smtp.php > /dev/null 2>&1 &');
+
+exec('php  includes/verify_smtp.php > /dev/null 2>&1 &');
 
 ?>
