@@ -207,11 +207,14 @@ $conn->close();
         <i class="fas fa-envelope mr-2"></i>Email
       </a>
       <div class="navbar-links">
-        <a href="index.php" class="nav-link ">
+        <a href="index.php" class="nav-link">
           <i class="fas fa-check-circle mr-2"></i>Verification
         </a>
-        <a href="#" class="nav-link active">
+        <a href="send_email.php" class="nav-link active">
           <i class="fas fa-paper-plane mr-2"></i>Send Emails
+        </a>
+        <a href="smtp_records.php" class="nav-link ">
+          <i class="fas fa-server mr-2"></i>SMTP Servers
         </a>
       </div>
     </div>

@@ -134,21 +134,24 @@
 </head>
 
 <body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="#" class="navbar-brand">
-                <i class="fas fa-envelope mr-2"></i>Email
-            </a>
-            <div class="navbar-links">
-                <a href="#" class="nav-link active">
-                    <i class="fas fa-check-circle mr-2"></i>Verification
-                </a>
-                <a href="send_form.php" class="nav-link">
-                    <i class="fas fa-paper-plane mr-2"></i>Send Emails
-                </a>
-            </div>
-        </div>
-    </nav>
+<nav class="navbar">
+    <div class="navbar-container">
+      <a href="#" class="navbar-brand">
+        <i class="fas fa-envelope mr-2"></i>Email
+      </a>
+      <div class="navbar-links">
+        <a href="index.php" class="nav-link active">
+          <i class="fas fa-check-circle mr-2"></i>Verification
+        </a>
+        <a href="send_form.php" class="nav-link ">
+          <i class="fas fa-paper-plane mr-2"></i>Send Emails
+        </a>
+        <a href="smtp_records.php" class="nav-link ">
+          <i class="fas fa-server mr-2"></i>SMTP Servers
+        </a>
+      </div>
+    </div>
+  </nav>
 
     <div id="progressOverlay" class="progress-overlay hidden">
         <div class="circle-loader">

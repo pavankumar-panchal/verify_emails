@@ -5,6 +5,10 @@ if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
 }
 
+// Initialize message variables
+$message = '';
+$message_type = ''; // 'success' or 'error'
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_smtp'])) {
@@ -20,7 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $sql = "INSERT INTO smtp_servers (name, host, port, encryption, email, password, daily_limit, is_active) 
                 VALUES ('$name', '$host', $port, '$encryption', '$email', '$password', $daily_limit, $is_active)";
-        $conn->query($sql);
+        
+        if ($conn->query($sql)) {
+            $message = 'SMTP server added successfully!';
+            $message_type = 'success';
+            // Clear POST data to prevent resubmission
+            header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+            exit();
+        } else {
+            $message = 'Error adding SMTP server: ' . $conn->error;
+            $message_type = 'error';
+        }
     } elseif (isset($_POST['update_smtp'])) {
         // Update existing SMTP server
         $id = intval($_POST['id']);
@@ -43,15 +57,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 daily_limit = $daily_limit,
                 is_active = $is_active
                 WHERE id = $id";
-        $conn->query($sql);
-    } elseif (isset($_GET['delete'])) {
-        // Delete SMTP server
-        $id = intval($_GET['delete']);
-        $sql = "DELETE FROM smtp_servers WHERE id = $id";
-        $conn->query($sql);
-        header("Location: smtp_records.php");
-        exit();
+        
+        if ($conn->query($sql)) {
+            $message = 'SMTP server updated successfully!';
+            $message_type = 'success';
+            header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+            exit();
+        } else {
+            $message = 'Error updating SMTP server: ' . $conn->error;
+            $message_type = 'error';
+        }
     }
+} elseif (isset($_GET['delete'])) {
+    // Delete SMTP server
+    $id = intval($_GET['delete']);
+    $sql = "DELETE FROM smtp_servers WHERE id = $id";
+    
+    if ($conn->query($sql)) {
+        $message = 'SMTP server deleted successfully!';
+        $message_type = 'success';
+    } else {
+        $message = 'Error deleting SMTP server: ' . $conn->error;
+        $message_type = 'error';
+    }
+    header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+    exit();
+}
+
+// Check for messages in URL parameters
+if (isset($_GET['message']) && isset($_GET['message_type'])) {
+    $message = urldecode($_GET['message']);
+    $message_type = $_GET['message_type'];
 }
 
 // Get all SMTP servers
@@ -132,6 +168,18 @@ $conn->close();
       color: #991b1b;
     }
 
+    .alert-success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border-left: 4px solid #10b981;
+    }
+
+    .alert-error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border-left: 4px solid #ef4444;
+    }
+
     .navbar {
       background-color: #ffffff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -196,7 +244,7 @@ $conn->close();
         <a href="index.php" class="nav-link">
           <i class="fas fa-check-circle mr-2"></i>Verification
         </a>
-        <a href="send_email.php" class="nav-link">
+        <a href="send_form.php" class="nav-link">
           <i class="fas fa-paper-plane mr-2"></i>Send Emails
         </a>
         <a href="smtp_records.php" class="nav-link active">
@@ -208,6 +256,29 @@ $conn->close();
 
   <!-- Main Content -->
   <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 mt-14">
+    <!-- Status Message -->
+    <?php if ($message): ?>
+    <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
+      <div class="flex-shrink-0">
+        <?php if ($message_type === 'success'): ?>
+          <i class="fas fa-check-circle text-green-500"></i>
+        <?php else: ?>
+          <i class="fas fa-exclamation-circle text-red-500"></i>
+        <?php endif; ?>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium">
+          <?= htmlspecialchars($message) ?>
+        </p>
+      </div>
+      <div class="ml-auto pl-3">
+        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-gray-900 flex items-center">
         <i class="fas fa-server mr-3 text-indigo-600"></i>
@@ -277,8 +348,7 @@ $conn->close();
                 <a href="?edit=<?= $server['id'] ?>#editServerModal" class="text-indigo-600 hover:text-indigo-900 mr-3">
                   <i class="fas fa-edit mr-1"></i> Edit
                 </a>
-                <a href="?delete=<?= $server['id'] ?>" class="text-red-600 hover:text-red-900" 
-                  onclick="return confirm('Are you sure you want to delete this SMTP server?')">
+                <a href="#" onclick="confirmDelete(<?= $server['id'] ?>)" class="text-red-600 hover:text-red-900">
                   <i class="fas fa-trash mr-1"></i> Delete
                 </a>
               </td>
@@ -500,11 +570,26 @@ $conn->close();
       <?php endif; ?>
     });
 
+    // Confirm delete function
+    function confirmDelete(id) {
+      if (confirm('Are you sure you want to delete this SMTP server?')) {
+        window.location.href = 'smtp_records.php?delete=' + id;
+      }
+    }
+
     // Scroll to edit modal if it exists
     <?php if ($editServer): ?>
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('editServerModal').scrollIntoView({ behavior: 'smooth' });
     });
+    <?php endif; ?>
+
+    // Auto-hide success message after 5 seconds
+    <?php if ($message_type === 'success'): ?>
+    setTimeout(() => {
+      const alert = document.querySelector('.alert-success');
+      if (alert) alert.remove();
+    }, 5000);
     <?php endif; ?>
   </script>
 </body>
