@@ -145,25 +145,73 @@ $conn->close();
         width: 100%;
       }
     }
+
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .navbar-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .navbar-brand {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #3b82f6;
+      text-decoration: none;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      background-color: #f3f4f6;
+    }
+
+    .nav-link.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .nav-link.active:hover {
+      background-color: #2563eb;
+    }
   </style>
 </head>
 
 <body class="antialiased">
   <!-- Navbar -->
-  <nav class="navbar py-3 px-4 sm:px-6">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <a href="#" class="flex items-center text-xl font-semibold text-indigo-600">
-        <i class="fas fa-envelope mr-2"></i>
-        <span>Email Campaign</span>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="#" class="navbar-brand">
+        <i class="fas fa-envelope mr-2"></i>Email
       </a>
-      <div class="flex space-x-2">
-        <a href="index.php"
-          class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-          <i class="fas fa-check-circle mr-1"></i> Verification
+      <div class="navbar-links">
+        <a href="index.php" class="nav-link ">
+          <i class="fas fa-check-circle mr-2"></i>Verification
         </a>
-        <a href="send_form.php"
-          class="px-3 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-          <i class="fas fa-paper-plane mr-1"></i> Send Emails
+        <a href="#" class="nav-link active">
+          <i class="fas fa-paper-plane mr-2"></i>Send Emails
         </a>
       </div>
     </div>
@@ -187,14 +235,15 @@ $conn->close();
   </div>
 
   <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 mt-16">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 mt-14">
     <div class="email-container p-6 sm:p-8">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900 flex items-center">
           <i class="fas fa-paper-plane mr-3 text-indigo-600"></i>
-          Send Bulk Emails
+          Send Emails
         </h1>
       </div>
+
 
       <form id="emailForm" enctype="multipart/form-data" class="space-y-6">
         <!-- SMTP Server Selection -->
@@ -212,7 +261,7 @@ $conn->close();
               <?php endforeach; ?>
             </select>
           </div>
-          <p class="mt-1 text-xs text-gray-500">Select the SMTP server you want to use for this campaign</p>
+          <p class="mt-1 text-xs text-gray-500">Select the SMTP server</p>
         </div>
 
         <!-- Sender Info and Subject in one row -->
@@ -221,7 +270,7 @@ $conn->close();
             <label class="block text-sm font-medium text-gray-700 mb-2">Sender Name</label>
             <input type="text" name="sender_name" required
               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Your Company Name" value="Bulk Email Sender">
+              placeholder="Your Company Name" value="Relyonsoft">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
