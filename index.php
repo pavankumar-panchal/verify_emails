@@ -12,56 +12,6 @@
 
     <style>
         /* Navbar styles */
-        .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 1rem 2rem;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-
-        .navbar-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .navbar-brand {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #3b82f6;
-            text-decoration: none;
-        }
-
-        .navbar-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-            background-color: #f3f4f6;
-        }
-
-        .nav-link.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .nav-link.active:hover {
-            background-color: #2563eb;
-        }
 
         /* Progress overlay styles */
         .progress-overlay {
@@ -134,25 +84,26 @@
 </head>
 
 <body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
-<nav class="navbar">
-    <div class="navbar-container">
-      <a href="#" class="navbar-brand">
-        <i class="fas fa-envelope mr-2"></i>Email
-      </a>
-      <div class="navbar-links">
-        <a href="index.php" class="nav-link active">
-          <i class="fas fa-check-circle mr-2"></i>Verification
-        </a>
-        <a href="send_form.php" class="nav-link ">
-          <i class="fas fa-paper-plane mr-2"></i>Send Emails
-        </a>
-        <a href="smtp_records.php" class="nav-link ">
-          <i class="fas fa-server mr-2"></i>SMTP Servers
-        </a>
-      </div>
-    </div>
-  </nav>
+    <?php include 'navbar.php'; ?>
 
+    <!-- <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-brand">
+                <i class="fas fa-envelope mr-2"></i>Email
+            </a>
+            <div class="navbar-links">
+                <a href="index.php" class="nav-link active">
+                    <i class="fas fa-check-circle mr-2"></i>Verification
+                </a>
+                <a href="send_form.php" class="nav-link ">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Emails
+                </a>
+                <a href="smtp_records.php" class="nav-link ">
+                    <i class="fas fa-server mr-2"></i>SMTP Servers
+                </a>
+            </div>
+        </div>
+    </nav> -->
     <div id="progressOverlay" class="progress-overlay hidden">
         <div class="circle-loader">
             <svg width="180" height="180">
@@ -166,7 +117,7 @@
     </div>
 
 
-    <div class="mt-20 w-full max-w-6xl">
+    <div class="mt-4 w-full max-w-6xl">
         <!-- <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
             <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
         </h2> -->

@@ -2,7 +2,7 @@
 // Database connection
 $conn = new mysqli("localhost", "root", "", "email_id");
 if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+  die("Database connection failed: " . $conn->connect_error);
 }
 
 // Initialize message variables
@@ -11,43 +11,46 @@ $message_type = ''; // 'success' or 'error'
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add_smtp'])) {
-        // Add new SMTP server
-        $name = $conn->real_escape_string($_POST['name']);
-        $host = $conn->real_escape_string($_POST['host']);
-        $port = intval($_POST['port']);
-        $encryption = $conn->real_escape_string($_POST['encryption']);
-        $email = $conn->real_escape_string($_POST['email']);
-        $password = $conn->real_escape_string($_POST['password']);
-        $daily_limit = intval($_POST['daily_limit']);
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
-        
-        $sql = "INSERT INTO smtp_servers (name, host, port, encryption, email, password, daily_limit, is_active) 
-                VALUES ('$name', '$host', $port, '$encryption', '$email', '$password', $daily_limit, $is_active)";
-        
-        if ($conn->query($sql)) {
-            $message = 'SMTP server added successfully!';
-            $message_type = 'success';
-            // Clear POST data to prevent resubmission
-            header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
-            exit();
-        } else {
-            $message = 'Error adding SMTP server: ' . $conn->error;
-            $message_type = 'error';
-        }
-    } elseif (isset($_POST['update_smtp'])) {
-        // Update existing SMTP server
-        $id = intval($_POST['id']);
-        $name = $conn->real_escape_string($_POST['name']);
-        $host = $conn->real_escape_string($_POST['host']);
-        $port = intval($_POST['port']);
-        $encryption = $conn->real_escape_string($_POST['encryption']);
-        $email = $conn->real_escape_string($_POST['email']);
-        $password = $conn->real_escape_string($_POST['password']);
-        $daily_limit = intval($_POST['daily_limit']);
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
-        
-        $sql = "UPDATE smtp_servers SET 
+  if (isset($_POST['add_smtp'])) {
+    // Add new SMTP server
+    $name = $conn->real_escape_string($_POST['name']);
+    $host = $conn->real_escape_string($_POST['host']);
+    $port = intval($_POST['port']);
+    $encryption = $conn->real_escape_string($_POST['encryption']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $conn->real_escape_string($_POST['password']);
+    $hourly_limit = intval($_POST['hourly_limit']);
+
+    $daily_limit = intval($_POST['daily_limit']);
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+    $sql = "INSERT INTO smtp_servers (name, host, port, encryption, email, password, daily_limit,hourly_limit, is_active) 
+                VALUES ('$name', '$host', $port, '$encryption', '$email', '$password', $daily_limit,$hourly_limit, $is_active)";
+
+    if ($conn->query($sql)) {
+      $message = 'SMTP server added successfully!';
+      $message_type = 'success';
+      // Clear POST data to prevent resubmission
+      header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+      exit();
+    } else {
+      $message = 'Error adding SMTP server: ' . $conn->error;
+      $message_type = 'error';
+    }
+  } elseif (isset($_POST['update_smtp'])) {
+    // Update existing SMTP server
+    $id = intval($_POST['id']);
+    $name = $conn->real_escape_string($_POST['name']);
+    $host = $conn->real_escape_string($_POST['host']);
+    $port = intval($_POST['port']);
+    $encryption = $conn->real_escape_string($_POST['encryption']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $conn->real_escape_string($_POST['password']);
+    $daily_limit = intval($_POST['daily_limit']);
+    $hourly_limit = intval($_POST['hourly_limit']);
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+    $sql = "UPDATE smtp_servers SET 
                 name = '$name',
                 host = '$host',
                 port = $port,
@@ -55,54 +58,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 email = '$email',
                 password = '$password',
                 daily_limit = $daily_limit,
+                hourly_limit = $hourly_limit,
                 is_active = $is_active
                 WHERE id = $id";
-        
-        if ($conn->query($sql)) {
-            $message = 'SMTP server updated successfully!';
-            $message_type = 'success';
-            header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
-            exit();
-        } else {
-            $message = 'Error updating SMTP server: ' . $conn->error;
-            $message_type = 'error';
-        }
-    }
-} elseif (isset($_GET['delete'])) {
-    // Delete SMTP server
-    $id = intval($_GET['delete']);
-    $sql = "DELETE FROM smtp_servers WHERE id = $id";
-    
+
     if ($conn->query($sql)) {
-        $message = 'SMTP server deleted successfully!';
-        $message_type = 'success';
+      $message = 'SMTP server updated successfully!';
+      $message_type = 'success';
+      header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+      exit();
     } else {
-        $message = 'Error deleting SMTP server: ' . $conn->error;
-        $message_type = 'error';
+      $message = 'Error updating SMTP server: ' . $conn->error;
+      $message_type = 'error';
     }
-    header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
-    exit();
+  }
+} elseif (isset($_GET['delete'])) {
+  // Delete SMTP server
+  $id = intval($_GET['delete']);
+  $sql = "DELETE FROM smtp_servers WHERE id = $id";
+
+  if ($conn->query($sql)) {
+    $message = 'SMTP server deleted successfully!';
+    $message_type = 'success';
+  } else {
+    $message = 'Error deleting SMTP server: ' . $conn->error;
+    $message_type = 'error';
+  }
+  header("Location: smtp_records.php?message=" . urlencode($message) . "&message_type=$message_type");
+  exit();
 }
 
 // Check for messages in URL parameters
 if (isset($_GET['message']) && isset($_GET['message_type'])) {
-    $message = urldecode($_GET['message']);
-    $message_type = $_GET['message_type'];
+  $message = urldecode($_GET['message']);
+  $message_type = $_GET['message_type'];
 }
 
 // Get all SMTP servers
 $result = $conn->query("SELECT * FROM smtp_servers ORDER BY id DESC");
 $smtpServers = [];
 while ($row = $result->fetch_assoc()) {
-    $smtpServers[] = $row;
+  $smtpServers[] = $row;
 }
 
 // Get server for editing if edit parameter is set
 $editServer = null;
 if (isset($_GET['edit'])) {
-    $id = intval($_GET['edit']);
-    $result = $conn->query("SELECT * FROM smtp_servers WHERE id = $id");
-    $editServer = $result->fetch_assoc();
+  $id = intval($_GET['edit']);
+  $result = $conn->query("SELECT * FROM smtp_servers WHERE id = $id");
+  $editServer = $result->fetch_assoc();
 }
 
 $conn->close();
@@ -235,48 +239,32 @@ $conn->close();
 
 <body class="antialiased">
   <!-- Navbar -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <a href="#" class="navbar-brand">
-        <i class="fas fa-envelope mr-2"></i>Email
-      </a>
-      <div class="navbar-links">
-        <a href="index.php" class="nav-link">
-          <i class="fas fa-check-circle mr-2"></i>Verification
-        </a>
-        <a href="send_form.php" class="nav-link">
-          <i class="fas fa-paper-plane mr-2"></i>Send Emails
-        </a>
-        <a href="smtp_records.php" class="nav-link active">
-          <i class="fas fa-server mr-2"></i>SMTP Servers
-        </a>
-      </div>
-    </div>
-  </nav>
+  <?php include 'navbar.php'; ?>
+
 
   <!-- Main Content -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 mt-14">
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 mt-4">
     <!-- Status Message -->
     <?php if ($message): ?>
-    <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
-      <div class="flex-shrink-0">
-        <?php if ($message_type === 'success'): ?>
-          <i class="fas fa-check-circle text-green-500"></i>
-        <?php else: ?>
-          <i class="fas fa-exclamation-circle text-red-500"></i>
-        <?php endif; ?>
+      <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
+        <div class="flex-shrink-0">
+          <?php if ($message_type === 'success'): ?>
+            <i class="fas fa-check-circle text-green-500"></i>
+          <?php else: ?>
+            <i class="fas fa-exclamation-circle text-red-500"></i>
+          <?php endif; ?>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium">
+            <?= htmlspecialchars($message) ?>
+          </p>
+        </div>
+        <div class="ml-auto pl-3">
+          <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
-      <div class="ml-3">
-        <p class="text-sm font-medium">
-          <?= htmlspecialchars($message) ?>
-        </p>
-      </div>
-      <div class="ml-auto pl-3">
-        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-    </div>
     <?php endif; ?>
 
     <div class="flex justify-between items-center mb-6">
@@ -309,6 +297,10 @@ $conn->close();
                 Status
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Hourly Limit
+              </th>
+
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Daily Limit
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -318,48 +310,51 @@ $conn->close();
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <?php foreach ($smtpServers as $server): ?>
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="text-sm font-medium text-gray-900">
-                    <?= htmlspecialchars($server['name']) ?>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="text-sm font-medium text-gray-900">
+                      <?= htmlspecialchars($server['name']) ?>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900"><?= htmlspecialchars($server['host']) ?></div>
-                <div class="text-sm text-gray-500">
-                  Port: <?= $server['port'] ?> (<?= strtoupper($server['encryption']) ?>)
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <?= htmlspecialchars($server['email']) ?>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><?= htmlspecialchars($server['host']) ?></div>
+                  <div class="text-sm text-gray-500">
+                    Port: <?= $server['port'] ?> (<?= strtoupper($server['encryption']) ?>)
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <?= htmlspecialchars($server['email']) ?>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                   <?= $server['is_active'] ? 'status-active' : 'status-inactive' ?>">
-                  <?= $server['is_active'] ? 'Active' : 'Inactive' ?>
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <?= $server['daily_limit'] ?>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <a href="?edit=<?= $server['id'] ?>#editServerModal" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                  <i class="fas fa-edit mr-1"></i> Edit
-                </a>
-                <a href="#" onclick="confirmDelete(<?= $server['id'] ?>)" class="text-red-600 hover:text-red-900">
-                  <i class="fas fa-trash mr-1"></i> Delete
-                </a>
-              </td>
-            </tr>
+                    <?= $server['is_active'] ? 'Active' : 'Inactive' ?>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <?= $server['hourly_limit'] ?>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <?= $server['daily_limit'] ?>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <a href="?edit=<?= $server['id'] ?>#editServerModal" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                  </a>
+                  <a href="#" onclick="confirmDelete(<?= $server['id'] ?>)" class="text-red-600 hover:text-red-900">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                  </a>
+                </td>
+              </tr>
             <?php endforeach; ?>
             <?php if (empty($smtpServers)): ?>
-            <tr>
-              <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
-                No SMTP servers found. Add one to get started.
-              </td>
-            </tr>
+              <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                  No SMTP servers found. Add one to get started.
+                </td>
+              </tr>
             <?php endif; ?>
           </tbody>
         </table>
@@ -379,8 +374,9 @@ $conn->close();
             <i class="fas fa-times"></i>
           </button>
         </div>
-        
+
         <form method="POST" class="space-y-4">
+          <!-- 1st Row: Name + Host -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -395,7 +391,8 @@ $conn->close();
                 placeholder="smtp.example.com">
             </div>
           </div>
-          
+
+          <!-- 2nd Row: Port + Encryption + Hourly Limit -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
@@ -413,14 +410,21 @@ $conn->close();
               </select>
             </div>
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Hourly Limit</label>
+              <input type="number" name="hourly_limit" required
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="100" value="100">
+            </div>
+          </div>
+
+          <!-- 3rd Row: Daily Limit + Email + Password -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit</label>
               <input type="number" name="daily_limit" required
                 class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="500" value="500">
             </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input type="email" name="email" required
@@ -434,7 +438,7 @@ $conn->close();
                 placeholder="SMTP password">
             </div>
           </div>
-          
+
           <div class="flex items-center">
             <input type="checkbox" name="is_active" id="is_active" checked
               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
@@ -442,7 +446,7 @@ $conn->close();
               Active
             </label>
           </div>
-          
+
           <div class="flex justify-end pt-4 space-x-3">
             <button type="button" onclick="document.getElementById('addServerModal').classList.add('hidden')"
               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -459,114 +463,121 @@ $conn->close();
 
     <!-- Edit Server Modal -->
     <?php if ($editServer): ?>
-    <div id="editServerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-      <div class="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-900">
-            <i class="fas fa-edit mr-2 text-indigo-600"></i>
-            Edit SMTP Server
-          </h3>
-          <a href="smtp_records.php"
-            class="text-gray-400 hover:text-gray-500">
-            <i class="fas fa-times"></i>
-          </a>
-        </div>
-        
-        <form method="POST" class="space-y-4">
-          <input type="hidden" name="id" value="<?= $editServer['id'] ?>">
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input type="text" name="name" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= htmlspecialchars($editServer['name']) ?>">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
-              <input type="text" name="host" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= htmlspecialchars($editServer['host']) ?>">
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
-              <input type="number" name="port" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= $editServer['port'] ?>">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Encryption</label>
-              <select name="encryption" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="ssl" <?= $editServer['encryption'] === 'ssl' ? 'selected' : '' ?>>SSL</option>
-                <option value="tls" <?= $editServer['encryption'] === 'tls' ? 'selected' : '' ?>>TLS</option>
-                <option value="" <?= empty($editServer['encryption']) ? 'selected' : '' ?>>None</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit</label>
-              <input type="number" name="daily_limit" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= $editServer['daily_limit'] ?>">
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" name="email" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= htmlspecialchars($editServer['email']) ?>">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input type="password" name="password" required
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value="<?= htmlspecialchars($editServer['password']) ?>">
-            </div>
-          </div>
-          
-          <div class="flex items-center">
-            <input type="checkbox" name="is_active" id="edit_is_active" 
-              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              <?= $editServer['is_active'] ? 'checked' : '' ?>>
-            <label for="edit_is_active" class="ml-2 block text-sm text-gray-700">
-              Active
-            </label>
-          </div>
-          
-          <div class="flex justify-end pt-4 space-x-3">
-            <a href="smtp_records.php"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Cancel
+      <div id="editServerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">
+              <i class="fas fa-edit mr-2 text-indigo-600"></i>
+              Edit SMTP Server
+            </h3>
+            <a href="smtp_records.php" class="text-gray-400 hover:text-gray-500">
+              <i class="fas fa-times"></i>
             </a>
-            <button type="submit" name="update_smtp"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              <i class="fas fa-save mr-2"></i> Update Server
-            </button>
           </div>
-        </form>
+
+          <form method="POST" class="space-y-4">
+            <input type="hidden" name="id" value="<?= $editServer['id'] ?>">
+
+            <!-- 1st Row: Name + Host -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input type="text" name="name" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= htmlspecialchars($editServer['name']) ?>">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
+                <input type="text" name="host" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= htmlspecialchars($editServer['host']) ?>">
+              </div>
+            </div>
+
+            <!-- 2nd Row: Port + Encryption + Hourly Limit -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
+                <input type="number" name="port" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= $editServer['port'] ?>">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Encryption</label>
+                <select name="encryption" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                  <option value="ssl" <?= $editServer['encryption'] === 'ssl' ? 'selected' : '' ?>>SSL</option>
+                  <option value="tls" <?= $editServer['encryption'] === 'tls' ? 'selected' : '' ?>>TLS</option>
+                  <option value="" <?= empty($editServer['encryption']) ? 'selected' : '' ?>>None</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hourly Limit</label>
+                <input type="number" name="hourly_limit" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= $editServer['hourly_limit'] ?>">
+              </div>
+            </div>
+
+            <!-- 3rd Row: Daily Limit + Email + Password -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit</label>
+                <input type="number" name="daily_limit" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= $editServer['daily_limit'] ?>">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= htmlspecialchars($editServer['email']) ?>">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" name="password" required
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value="<?= htmlspecialchars($editServer['password']) ?>">
+              </div>
+            </div>
+
+            <div class="flex items-center">
+              <input type="checkbox" name="is_active" id="edit_is_active"
+                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" <?= $editServer['is_active'] ? 'checked' : '' ?>>
+              <label for="edit_is_active" class="ml-2 block text-sm text-gray-700">
+                Active
+              </label>
+            </div>
+
+            <div class="flex justify-end pt-4 space-x-3">
+              <a href="smtp_records.php"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancel
+              </a>
+              <button type="submit" name="update_smtp"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-save mr-2"></i> Update Server
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
     <?php endif; ?>
   </main>
 
   <script>
     // Close modals when clicking outside
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
       const addModal = document.getElementById('addServerModal');
       if (event.target === addModal) {
         addModal.classList.add('hidden');
       }
-      
+
       <?php if ($editServer): ?>
-      const editModal = document.getElementById('editServerModal');
-      if (event.target === editModal) {
-        window.location.href = 'smtp_records.php';
-      }
+        const editModal = document.getElementById('editServerModal');
+        if (event.target === editModal) {
+          window.location.href = 'smtp_records.php';
+        }
       <?php endif; ?>
     });
 
@@ -579,17 +590,17 @@ $conn->close();
 
     // Scroll to edit modal if it exists
     <?php if ($editServer): ?>
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('editServerModal').scrollIntoView({ behavior: 'smooth' });
-    });
+      document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('editServerModal').scrollIntoView({ behavior: 'smooth' });
+      });
     <?php endif; ?>
 
     // Auto-hide success message after 5 seconds
     <?php if ($message_type === 'success'): ?>
-    setTimeout(() => {
-      const alert = document.querySelector('.alert-success');
-      if (alert) alert.remove();
-    }, 5000);
+      setTimeout(() => {
+        const alert = document.querySelector('.alert-success');
+        if (alert) alert.remove();
+      }, 5000);
     <?php endif; ?>
   </script>
 </body>

@@ -201,24 +201,8 @@ $conn->close();
 
 <body class="antialiased">
   <!-- Navbar -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <a href="#" class="navbar-brand">
-        <i class="fas fa-envelope mr-2"></i>Email
-      </a>
-      <div class="navbar-links">
-        <a href="index.php" class="nav-link">
-          <i class="fas fa-check-circle mr-2"></i>Verification
-        </a>
-        <a href="send_email.php" class="nav-link active">
-          <i class="fas fa-paper-plane mr-2"></i>Send Emails
-        </a>
-        <a href="smtp_records.php" class="nav-link ">
-          <i class="fas fa-server mr-2"></i>SMTP Servers
-        </a>
-      </div>
-    </div>
-  </nav>
+  <?php include 'navbar.php'; ?>
+
 
   <!-- Progress Overlay -->
   <div id="progressOverlay" class="progress-overlay">
@@ -238,7 +222,7 @@ $conn->close();
   </div>
 
   <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 mt-14">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 mt-4">
     <div class="email-container p-6 sm:p-8">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900 flex items-center">
