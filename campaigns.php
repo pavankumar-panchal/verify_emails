@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($conn->query($sql)) {
             $message = 'Campaign added successfully!';
             $message_type = 'success';
+
+
             header("Location: campaigns.php?message=" . urlencode($message) . "&message_type=$message_type");
             exit();
         } else {
@@ -99,6 +101,9 @@ if (isset($_GET['edit'])) {
 $conn->close();
 ?>
 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -117,13 +122,17 @@ $conn->close();
             text-overflow: ellipsis;
             color: #4b5563;
         }
+
         .compact-table {
             width: 100%;
             table-layout: fixed;
         }
-        .compact-table th, .compact-table td {
+
+        .compact-table th,
+        .compact-table td {
             padding: 0.75rem 0.5rem;
         }
+
         .action-links {
             white-space: nowrap;
         }
@@ -168,21 +177,25 @@ $conn->close();
                 <table class="min-w-full compact-table divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="w-16 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th
+                                class="w-16 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Description</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Subject</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Email Preview</th>
-                            <th class="w-32 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th
+                                class="w-32 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php foreach ($campaigns as $campaign): ?>
                             <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500"><?= $campaign['campaign_id'] ?>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?= $campaign['campaign_id'] ?>
                                 </td>
                                 <td class="px-3 py-4">
                                     <div class="text-sm font-medium text-gray-900">
@@ -190,10 +203,11 @@ $conn->close();
                                     </div>
                                 </td>
                                 <td class="px-3 py-4">
-                                    <div class="text-sm text-gray-900"><?= htmlspecialchars($campaign['mail_subject']) ?></div>
+                                    <div class="text-sm text-gray-900"><?= htmlspecialchars($campaign['mail_subject']) ?>
+                                    </div>
                                 </td>
                                 <td class="px-3 py-4">
-                                    <div class="text-sm email-body-preview" 
+                                    <div class="text-sm email-body-preview"
                                         title="<?= htmlspecialchars(strip_tags($campaign['mail_body_preview'])) ?>">
                                         <?= htmlspecialchars(strip_tags($campaign['mail_body_preview'])) ?>
                                     </div>

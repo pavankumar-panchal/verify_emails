@@ -1,0 +1,20 @@
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17

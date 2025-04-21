@@ -141,7 +141,7 @@ $conn->close();
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f3f4f6;
+      /* background-color: #f3f4f6; */
       color: var(--text);
     }
 
@@ -241,7 +241,7 @@ $conn->close();
   </style>
 </head>
 
-<body class="antialiased">
+<body class="antialiased bg-gray-50 ">
   <!-- Navbar -->
   <?php include 'navbar.php'; ?>
 
