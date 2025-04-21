@@ -78,6 +78,13 @@ if (isset($_GET['message']) && isset($_GET['message_type'])) {
 $result = $conn->query("SELECT * FROM campaign_master ORDER BY campaign_id DESC");
 $campaigns = [];
 while ($row = $result->fetch_assoc()) {
+    // Create a preview of the mail body (first 30 words)
+    $words = preg_split('/\s+/', $row['mail_body']);
+    $preview = implode(' ', array_slice($words, 0, 30));
+    if (count($words) > 30) {
+        $preview .= '...';
+    }
+    $row['mail_body_preview'] = $preview;
     $campaigns[] = $row;
 }
 
@@ -99,8 +106,11 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Campaigns</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link rel="stylesheet" href="assets/style_tailwind.css">
+    <link rel="stylesheet" href="assets/main.css">
+
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
     <style>
         .alert-success {
             background-color: #d1fae5;
@@ -125,57 +135,22 @@ $conn->close();
             z-index: 100;
         }
 
-        .navbar-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .navbar-brand {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #3b82f6;
-            text-decoration: none;
-        }
-
-        .navbar-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-            background-color: #f3f4f6;
-        }
-
-        .nav-link.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .nav-link.active:hover {
-            background-color: #2563eb;
+        .body-preview {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 4.5em;
+            line-height: 1.5em;
         }
     </style>
 </head>
 
 <body class="bg-gray-100">
-
-
-    <div class="container mx-auto px-4 py-8">
     <?php include 'navbar.php'; ?>
 
- 
-
-
+    <div class="container mx-auto px-4 py-8 mt-16">
         <!-- Status Message -->
         <?php if ($message): ?>
             <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
@@ -215,6 +190,8 @@ $conn->close();
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Subject</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email Body</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions</th>
                     </tr>
                 </thead>
@@ -231,6 +208,12 @@ $conn->close();
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900"><?= htmlspecialchars($campaign['mail_subject']) ?></div>
                             </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900 body-preview"
+                                    title="<?= htmlspecialchars($campaign['mail_body_preview']) ?>">
+                                    <?= htmlspecialchars($campaign['mail_body_preview']) ?>
+                                </div>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="?edit=<?= $campaign['campaign_id'] ?>#editCampaignModal"
                                     class="text-blue-600 hover:text-blue-900 mr-3">
@@ -245,7 +228,7 @@ $conn->close();
                     <?php endforeach; ?>
                     <?php if (empty($campaigns)): ?>
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
                                 No campaigns found. Add one to get started.
                             </td>
                         </tr>

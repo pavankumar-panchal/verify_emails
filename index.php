@@ -5,9 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Split & Verification</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/main.css">
+
+    <link rel="stylesheet" href="assets/style_tailwind.css">
+
 
 
     <style>
@@ -84,26 +89,11 @@
 </head>
 
 <body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
-    <?php include 'navbar.php'; ?>
+    <?php
+    include 'navbar.php';
+    ?>
 
-    <!-- <nav class="navbar">
-        <div class="navbar-container">
-            <a href="#" class="navbar-brand">
-                <i class="fas fa-envelope mr-2"></i>Email
-            </a>
-            <div class="navbar-links">
-                <a href="index.php" class="nav-link active">
-                    <i class="fas fa-check-circle mr-2"></i>Verification
-                </a>
-                <a href="send_form.php" class="nav-link ">
-                    <i class="fas fa-paper-plane mr-2"></i>Send Emails
-                </a>
-                <a href="smtp_records.php" class="nav-link ">
-                    <i class="fas fa-server mr-2"></i>SMTP Servers
-                </a>
-            </div>
-        </div>
-    </nav> -->
+
     <div id="progressOverlay" class="progress-overlay hidden">
         <div class="circle-loader">
             <svg width="180" height="180">
@@ -273,24 +263,24 @@
     <script>
 
 
-        function triggerDomainVerification() {
-            fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showStatusMessage("Verification process started!", "success");
-                        setTimeout(() => {
-                            fetchProgress();  // Start checking progress after 5 seconds
-                        }, 5000);
-                    } else {
-                        showStatusMessage("Error starting verification process.", "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error triggering domain verification:", error);
-                    showStatusMessage("Error triggering domain verification.", "error");
-                });
-        }
+        // function triggerDomainVerification() {
+        //     fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.status === 'success') {
+        //                 showStatusMessage("Verification process started!", "success");
+        //                 setTimeout(() => {
+        //                     fetchProgress();  // Start checking progress after 5 seconds
+        //                 }, 5000);
+        //             } else {
+        //                 showStatusMessage("Error starting verification process.", "error");
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error("Error triggering domain verification:", error);
+        //             showStatusMessage("Error triggering domain verification.", "error");
+        //         });
+        // }
 
         // Progress Tracking
 
@@ -454,21 +444,22 @@
                 clearInterval(progressInterval);
             }
         });
-        function checkVerificationConfirmation() {
-            fetch('includes/domain_verify_log.txt?rand=' + Math.random())
-                .then(response => response.text())
-                .then(log => {
-                    if (log.includes("Script Triggered")) {
-                        alert('✅ verify_domain.php was actually executed.');
-                    } else {
-                        alert('❌ Script not yet executed.');
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                    alert('❌ Could not check domain verification status.');
-                });
-        }
+
+        // function checkVerificationConfirmation() {
+        //     fetch('includes/domain_verify_log.txt?rand=' + Math.random())
+        //         .then(response => response.text())
+        //         .then(log => {
+        //             if (log.includes("Script Triggered")) {
+        //                 alert('✅ verify_domain.php was actually executed.');
+        //             } else {
+        //                 alert('❌ Script not yet executed.');
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error(error);
+        //             alert('❌ Could not check domain verification status.');
+        //         });
+        // }
 
 
 

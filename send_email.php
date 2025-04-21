@@ -142,10 +142,10 @@ while ($row = $result->fetch_assoc()) {
 }
 
 // Finalize log
-$logContent .= "Sending completed at " . date('Y-m-d H:i:s') . "\n";
-$logContent .= "Total sent: $sentCount\n";
-$logContent .= "Total failed: $failedCount\n";
-file_put_contents('logs/' . $logFile, $logContent);
+// $logContent .= "Sending completed at " . date('Y-m-d H:i:s') . "\n";
+// $logContent .= "Total sent: $sentCount\n";
+// $logContent .= "Total failed: $failedCount\n";
+// file_put_contents('logs/' . $logFile, $logContent);
 
 // Clean up attachments
 foreach ($attachments as $attachment) {
