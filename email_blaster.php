@@ -23,15 +23,18 @@ if ($db->connect_error) {
 $db->set_charset("utf8mb4");
 $db->query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
 
-class EmailBlaster {
+class EmailBlaster
+{
     private $db;
     private $currentSmtpId = null;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->db = $db;
     }
 
-    public function run() {
+    public function run()
+    {
         while (true) {
             try {
                 $this->processCampaigns();
@@ -43,16 +46,18 @@ class EmailBlaster {
         }
     }
 
-    private function processCampaigns() {
+    private function processCampaigns()
+    {
         // Get all active campaigns
         $campaigns = $this->getActiveCampaigns();
-        
+
         foreach ($campaigns as $campaign) {
             $this->processCampaign($campaign);
         }
     }
 
-    private function processCampaign($campaign) {
+    private function processCampaign($campaign)
+    {
         // Get active SMTP server
         $smtpServer = $this->getNextActiveSmtpServer();
         if (!$smtpServer) {
@@ -87,13 +92,13 @@ class EmailBlaster {
 
         // Get pending emails for this campaign
         $emails = $this->getPendingEmails($campaign['campaign_id'], $available);
-        
+
         foreach ($emails as $email) {
             try {
                 $this->sendEmail($smtpServer, $email, $campaign);
                 $this->recordDelivery($smtpServer['id'], $email['raw_emailid'], $campaign['campaign_id']);
                 $this->log("Sent email for campaign {$campaign['campaign_id']} to {$email['raw_emailid']}");
-                
+
                 // Small delay between emails
                 usleep(100000); // 0.1 second
             } catch (Exception $e) {
@@ -102,13 +107,15 @@ class EmailBlaster {
         }
     }
 
-    private function getActiveCampaigns() {
+    private function getActiveCampaigns()
+    {
         $query = "SELECT * FROM campaign_master ORDER BY campaign_id";
         $result = $this->db->query($query);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    private function getNextActiveSmtpServer() {
+    private function getNextActiveSmtpServer()
+    {
         // Get all active SMTP servers
         $query = "SELECT * FROM smtp_servers WHERE is_active = 1 ORDER BY id";
         $result = $this->db->query($query);
@@ -141,7 +148,8 @@ class EmailBlaster {
         return $servers[$nextIndex];
     }
 
-    private function getPendingEmails($campaign_id, $limit) {
+    private function getPendingEmails($campaign_id, $limit)
+    {
         $query = "SELECT e.id, e.raw_emailid 
                  FROM emails e
                  WHERE e.domain_status = 1
@@ -151,14 +159,15 @@ class EmailBlaster {
                      AND mb.campaign_id = ?
                  )
                  LIMIT ?";
-        
+
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("ii", $campaign_id, $limit);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    private function getDailySentCount($smtpId) {
+    private function getDailySentCount($smtpId)
+    {
         $query = "SELECT COUNT(*) as count FROM mail_blaster 
                  WHERE smtpid = ? AND delivery_date = CURDATE()";
         $stmt = $this->db->prepare($query);
@@ -167,7 +176,8 @@ class EmailBlaster {
         return $stmt->get_result()->fetch_assoc()['count'];
     }
 
-    private function getHourlySentCount($smtpId) {
+    private function getHourlySentCount($smtpId)
+    {
         $query = "SELECT COUNT(*) as count FROM mail_blaster 
                  WHERE smtpid = ? 
                  AND delivery_date = CURDATE() 
@@ -178,7 +188,8 @@ class EmailBlaster {
         return $stmt->get_result()->fetch_assoc()['count'];
     }
 
-    private function sendEmail($smtp, $email, $campaign) {
+    private function sendEmail($smtp, $email, $campaign)
+    {
         $mail = new PHPMailer(true);
 
         // SMTP Configuration
@@ -207,20 +218,22 @@ class EmailBlaster {
         }
     }
 
-    private function recordDelivery($smtpId, $toMail, $campaignId) {
+    private function recordDelivery($smtpId, $toMail, $campaignId)
+    {
         $query = "INSERT INTO mail_blaster 
                  (campaign_id, to_mail, smtpid, delivery_date, delivery_time)
                  VALUES (?, ?, ?, CURDATE(), CURTIME())";
-        
+
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("isi", $campaignId, $toMail, $smtpId);
-        
+
         if (!$stmt->execute()) {
             throw new Exception("Failed to record delivery: " . $stmt->error);
         }
     }
 
-    private function log($message) {
+    private function log($message)
+    {
         $logMessage = "[" . date('Y-m-d H:i:s') . "] " . $message . PHP_EOL;
         echo $logMessage;
         file_put_contents('email_blaster.log', $logMessage, FILE_APPEND);

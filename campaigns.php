@@ -148,9 +148,10 @@ $conn->close();
 </head>
 
 <body class="bg-gray-100">
+
     <?php include 'navbar.php'; ?>
 
-    <div class="container mx-auto px-4 py-8 mt-16">
+    <div class="container mx-auto px-4 py-8 mt-8">
         <!-- Status Message -->
         <?php if ($message): ?>
             <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
