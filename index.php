@@ -13,9 +13,39 @@
 
     <link rel="stylesheet" href="assets/style_tailwind.css">
 
-
-
     <style>
+        .custom-file-input {
+            display: block;
+            width: 100%;
+            color: #6B7280;
+            /* Tailwind's gray-500 */
+            font-size: 0.875rem;
+            /* text-sm */
+            border: none;
+            padding: 0;
+            background-color: transparent;
+        }
+
+        .custom-file-input::file-selector-button {
+            margin-right: 1rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            background-color: #EFF6FF;
+            /* Tailwind's blue-50 */
+            color: #1D4ED8;
+            /* Tailwind's blue-700 */
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .custom-file-input::file-selector-button:hover {
+            background-color: #DBEAFE;
+            /* Tailwind's blue-100 */
+        }
+
         /* Navbar styles */
 
         /* Progress overlay styles */
@@ -119,7 +149,7 @@
                 <div class="w-full max-w-md mb-4">
                     <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
                     <input type="file" id="csv_file" name="csv_file" required accept=".csv"
-                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        class="custom-file-input block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     <p class="mt-1 text-xs text-gray-500"></p>
                 </div>
 
