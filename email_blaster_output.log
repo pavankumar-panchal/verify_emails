@@ -344,3 +344,19 @@
 [2025-04-21 18:04:19] Failed to send email to 123_45@gmail.com: SMTP Error: Could not connect to SMTP host. Failed to connect to server
 [2025-04-21 18:04:19] Failed to send email to working@yahoo.in: SMTP Error: Could not connect to SMTP host. Failed to connect to server
 [2025-04-21 18:04:19] Failed to send email to working@outlook.com: SMTP Error: Could not connect to SMTP host. Failed to connect to server
+[2025-04-21 18:05:24] Sent email for campaign 10 to 123_45@gmail.com
+[2025-04-21 18:05:30] Sent email for campaign 10 to working@yahoo.in
+[2025-04-21 18:05:37] Sent email for campaign 10 to working@outlook.com
+[2025-04-21 18:11:43] Sent email for campaign 1 to 03580.hr@fourpoints.com
+[2025-04-21 18:18:49] Sent email for campaign 11 to 00ar.khan@gmail.com
+[2025-04-21 18:18:54] Sent email for campaign 11 to 0107sjain@gmail.com
+[2025-04-21 18:19:00] Sent email for campaign 11 to 0202santu@gmail.com
+[2025-04-21 18:19:05] Sent email for campaign 11 to 05rohitmishra@gmail.com
+[2025-04-21 18:19:10] Sent email for campaign 11 to 08pradeepyadavspn@gmail.com
+[2025-04-21 18:19:16] Sent email for campaign 11 to 1008harsh1@gmail.com
+[2025-04-21 18:19:22] Sent email for campaign 11 to 100plusproperties.hyd@gmail.com
+[2025-04-21 18:19:28] Sent email for campaign 11 to 111.svtax@gmail.com
+[2025-04-21 18:19:32] Sent email for campaign 11 to 123gillu@gmail.com
+[2025-04-21 18:19:39] Sent email for campaign 11 to 123snsarchitects@gmail.com
+[2025-04-21 18:19:44] Sent email for campaign 11 to 127.0.0.17@gmail.com
+[2025-04-21 18:19:50] Sent email for campaign 11 to panchalpavan800@gmail.com

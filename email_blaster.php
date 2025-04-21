@@ -9,9 +9,9 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'email_id');
 
-// Email sending limits
-define('HOURLY_LIMIT', 100);
-define('DAILY_LIMIT', 1000);
+// // Email sending limits
+// define('HOURLY_LIMIT', 100);
+// define('DAILY_LIMIT', 1000);
 
 // Connect to database
 $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -80,11 +80,18 @@ class EmailBlaster
         }
 
         // Calculate available slots
+        // $available = min(
+        //     $smtpServer['daily_limit'] - $dailySent,
+        //     $smtpServer['hourly_limit'] - $hourlySent,
+        //     HOURLY_LIMIT
+        // );
+
         $available = min(
             $smtpServer['daily_limit'] - $dailySent,
-            $smtpServer['hourly_limit'] - $hourlySent,
-            HOURLY_LIMIT
+            $smtpServer['hourly_limit'] - $hourlySent
         );
+
+
 
         if ($available <= 0) {
             return;
