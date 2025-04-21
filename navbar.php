@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         /* Reset and base styles */
         * {
@@ -162,9 +163,9 @@
                     <a href="index.php" class="nav-link" id="desktop-verification">
                         <i class="fas fa-check-circle"></i> Verification
                     </a>
-                    <a href="send_form.php" class="nav-link" id="desktop-send">
+                    <!-- <a href="send_form.php" class="nav-link" id="desktop-send">
                         <i class="fas fa-paper-plane"></i> Send
-                    </a>
+                    </a> -->
                     <a href="smtp_records.php" class="nav-link" id="desktop-smtp">
                         <i class="fas fa-server"></i> SMTP
                     </a>
@@ -185,9 +186,9 @@
             <a href="index.php" class="mobile-nav-link" id="mobile-verification">
                 <i class="fas fa-check-circle"></i> Verification
             </a>
-            <a href="send_form.php" class="mobile-nav-link" id="mobile-send">
+            <!-- <a href="send_form.php" class="mobile-nav-link" id="mobile-send">
                 <i class="fas fa-paper-plane"></i> Send Emails
-            </a>
+            </a> -->
             <a href="smtp_records.php" class="mobile-nav-link" id="mobile-smtp">
                 <i class="fas fa-server"></i> SMTP Servers
             </a>
