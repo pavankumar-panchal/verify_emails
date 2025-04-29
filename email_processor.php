@@ -51,9 +51,13 @@ try {
 }
 
 // Close connection and flush buffer
+$cmd = "nohup php -q includes/verify_domain.php > /dev/null 2>&1 & echo $!";
+$pid = shell_exec($cmd);
+
 $conn->close();
 ob_end_flush();
 exit;
+
 
 function getExcludedAccounts()
 {
@@ -225,9 +229,7 @@ function handlePostRequest()
     $conn->commit();
     fclose($handle);
 
-    if ($inserted_count > 0) {
-        startBackgroundDomainVerification();
-    }
+
 
     return [
         "status" => "success",
@@ -239,53 +241,36 @@ function handlePostRequest()
     ];
 }
 
-function startBackgroundDomainVerification() {
-    // Get the absolute path to the verify_domain.php script
-    $scriptPath = realpath(__DIR__ . '/includes/verify_domain.php');
-    
-    if (!$scriptPath) {
-        error_log("verify_domain.php not found.");
-        return;
-    }
-
-    // Build the background command using nohup and redirect all output to /dev/null
-    $cmd = "nohup php -q " . escapeshellarg($scriptPath) . " > /dev/null 2>&1 & echo $!";
-
-    $pid = null;
-
-    // Try executing the command using shell_exec or exec
-    if (function_exists('shell_exec')) {
-        $pid = trim(shell_exec($cmd));
-    } elseif (function_exists('exec')) {
-        exec($cmd, $output, $return_var);
-        $pid = isset($output[0]) ? trim($output[0]) : null;
-    }
-
-    // Optional: Log the PID or error
-    if ($pid) {
-        error_log("Background process started with PID: $pid");
-    } else {
-        error_log("Failed to start background process for verify_domain.php");
-    }
-}
-
-
-
-
-// ----------------------------------------------------
 // function startBackgroundDomainVerification()
 // {
-//     $phpPath = 'C:\xampp\php\php.exe';
-//     $scriptPath = 'C:\xampp\htdocs\email\verify_domain.php'; // full path to your script
+//     // Get the absolute path to the verify_domain.php script
+//     $scriptPath = realpath(__DIR__ . './includes/verify_domain.php');
 
-//     // Run the command in a new CMD window in the background
-//     $cmd = "cmd /c start \"\" \"$phpPath\" \"$scriptPath\"";
+//     if (!$scriptPath) {
+//         error_log("verify_domain.php not found.");
+//         return;
+//     }
 
-//     if (function_exists('pclose') && function_exists('popen')) {
-//         pclose(popen($cmd, 'r'));
+//     // Build the background command using nohup and redirect all output to /dev/null
+//     $cmd = "nohup php -q " . escapeshellarg($scriptPath) . " > /dev/null 2>&1 & echo $!";
+
+//     $pid = null;
+
+//     // Try executing the command using shell_exec or exec
+//     if (function_exists('shell_exec')) {
+//         $pid = trim(shell_exec($cmd));
+//     } elseif (function_exists('exec')) {
+//         exec($cmd, $output, $return_var);
+//         $pid = isset($output[0]) ? trim($output[0]) : null;
+//     }
+
+//     // Optional: Log the PID or error
+//     if ($pid) {
+//         error_log("Background process started with PID: $pid");
+//     } else {
+//         error_log("Failed to start background process for verify_domain.php");
 //     }
 // }
-
 
 
 function handleGetRequest()
@@ -341,5 +326,39 @@ function getDomainIP($domain)
     $aRecord = @gethostbyname($domain);
     return ($aRecord !== $domain) ? $aRecord : false;
 }
+
+function startBackgroundDomainVerification()
+{
+    $scriptPath = __DIR__ . '/verify_domain.php';
+
+    // Check if the script exists
+    if (!file_exists($scriptPath)) {
+        error_log("Error: verify_domain.php not found at: $scriptPath");
+        return false;
+    }
+
+    // Run the script in the background depending on the OS
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        // Windows - escape the script path properly
+        $command = "start /B php \"" . escapeshellcmd($scriptPath) . "\"";
+        pclose(popen($command, "r"));
+    } else {
+        // Unix/Linux - use nohup to ensure it continues after terminal is closed
+        $command = "nohup php " . escapeshellcmd($scriptPath) . " > /dev/null 2>&1 &";
+        exec($command);
+    }
+
+    return true;
+}
+
+// Call it after insertion
+if ($inserted_count > 0) {
+    startBackgroundDomainVerification();
+}
+
+$conn->close();
+
+exec('php  ./includes/verify_domain.php > /dev/null 2>&1 &');
+
 
 ?>

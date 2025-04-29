@@ -1,4 +1,5 @@
-// Global variables
+
+
 let emailsData = [];
 let currentPage = 1;
 let rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
@@ -39,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchEmails();
     setupEventListeners();
 });
+
+
+
 
 function setupEventListeners() {
     document.getElementById("csvForm").addEventListener("submit", handleFileUpload);
@@ -284,6 +288,7 @@ async function handleFileUpload(event) {
     }
 }
 
+
 async function deleteEmail(id, button) {
     if (!confirm("Are you sure you want to delete this email record?")) return;
 
@@ -395,3 +400,4 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("nextPage").click();
     }, 100); // Ensures the button is fully loaded before clicking
 });
+
