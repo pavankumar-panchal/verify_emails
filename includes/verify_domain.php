@@ -1,6 +1,6 @@
 <?php
 // file_put_contents(__DIR__ . '/domain_verify_log.txt', date('Y-m-d H:i:s') . " - Script Triggered\n", FILE_APPEND);
-file_put_contents('/opt/lampp/htdocs/email/includes/domain_verify_log.txt', "Checking domains at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+file_put_contents("verify_log.txt", date("Y-m-d H:i:s") . " - verify_domain.php started in: " . getcwd() . "\n", FILE_APPEND);
 
 // Add your domain verification logic here
 
@@ -13,6 +13,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET");
 
 require './db.php';
+
 
 // Configuration
 define('MAX_WORKERS', 50); // Number of parallel processes
