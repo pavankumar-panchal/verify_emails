@@ -172,6 +172,9 @@
                     <a href="campaigns.php" class="nav-link" id="desktop-campaigns">
                         <i class="fas fa-bullhorn"></i> Campaigns
                     </a>
+                    <a href="campaign_monitor.php" class="nav-link" id="desktop-campaigns_monitor">
+                        <i class="fas fa-chart-line"></i> Campaigns Monitor
+                    </a>
                 </div>
 
                 <!-- Mobile Menu Button -->
@@ -195,6 +198,9 @@
             <a href="campaigns.php" class="mobile-nav-link" id="mobile-campaigns">
                 <i class="fas fa-bullhorn"></i> Campaigns
             </a>
+            <a href="campaign_monitor.php" class="mobile-nav-link" id="mobile-campaigns_monitor">
+                <i class="fas fa-chart-line"></i> Campaigns Monitor
+            </a> 
         </div>
     </nav>
 
@@ -226,6 +232,10 @@
                 case 'campaigns.php':
                     document.getElementById('desktop-campaigns').classList.add('active');
                     document.getElementById('mobile-campaigns').classList.add('active');
+                    break;
+                    case 'campaign_monitor.php':
+                    document.getElementById('desktop-campaigns_monitor').classList.add('active');
+                    document.getElementById('mobile-campaigns_monitor').classList.add('active');
                     break;
                 default:
                     // For index page when it's just '/'

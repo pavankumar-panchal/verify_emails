@@ -1,0 +1,4 @@
+PHP Fatal error:  Uncaught Error: Class "mysqli" not found in /opt/lampp/htdocs/email/campaign_monitor.php:8
+Stack trace:
+#0 {main}
+  thrown in /opt/lampp/htdocs/email/campaign_monitor.php on line 8

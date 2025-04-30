@@ -393,3 +393,28 @@ Stack trace:
 #0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
 #1 {main}
   thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
+PHP Fatal error:  Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/email_blaster.php:17
+Stack trace:
+#0 /opt/lampp/htdocs/email/email_blaster.php(17): mysqli->__construct('localhost', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 {main}
+  thrown in /opt/lampp/htdocs/email/email_blaster.php on line 17
