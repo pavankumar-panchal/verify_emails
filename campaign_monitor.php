@@ -30,12 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Function to start a campaign
 
+// In startCampaign() function
+
 
 function startCampaign($conn, $campaign_id)
 {
     global $message, $message_type;
 
-    // First check if campaign exists in master table
+    // Check if campaign exists
     $check = $conn->query("SELECT 1 FROM campaign_master WHERE campaign_id = $campaign_id");
     if ($check->num_rows == 0) {
         $message = "Campaign #$campaign_id does not exist";
@@ -43,7 +45,7 @@ function startCampaign($conn, $campaign_id)
         return;
     }
 
-    // Check if campaign is already completed
+    // Check if already completed
     $status_check = $conn->query("SELECT status FROM campaign_status WHERE campaign_id = $campaign_id");
     if ($status_check->num_rows > 0 && $status_check->fetch_assoc()['status'] === 'completed') {
         $message = "Campaign #$campaign_id is already completed";
@@ -51,46 +53,90 @@ function startCampaign($conn, $campaign_id)
         return;
     }
 
-    // Check if campaign status exists
-    $check = $conn->query("SELECT 1 FROM campaign_status WHERE campaign_id = $campaign_id");
+    // Calculate accurate counts of emails
+    $counts = getEmailCounts($conn, $campaign_id);
 
-    if ($check->num_rows > 0) {
-        // Campaign status exists, just update it to running
+    if ($status_check->num_rows > 0) {
+        // Update existing campaign status to running
         $conn->query("UPDATE campaign_status SET 
             status = 'running',
-            start_time = NOW(),
+            total_emails = {$counts['total_valid']},
+            pending_emails = {$counts['pending']},
+            sent_emails = {$counts['sent']},
+            failed_emails = {$counts['failed']},
+            start_time = IFNULL(start_time, NOW()),
             end_time = NULL
             WHERE campaign_id = $campaign_id");
     } else {
-        // Get total valid emails (domain_status=1) that haven't been sent for this campaign
-        $result = $conn->query("
-            SELECT COUNT(*) as total 
-            FROM emails e
-            WHERE e.domain_status = 1
-            AND NOT EXISTS (
-                SELECT 1 FROM mail_blaster mb 
-                WHERE mb.to_mail = e.raw_emailid 
-                AND mb.campaign_id = $campaign_id
-            )
-        ");
-        $total_emails = $result->fetch_assoc()['total'];
-
         // Create new campaign status
-        $conn->query("
-            INSERT INTO campaign_status 
+        $conn->query("INSERT INTO campaign_status 
             (campaign_id, total_emails, pending_emails, sent_emails, failed_emails, status, start_time)
-            VALUES ($campaign_id, $total_emails, $total_emails, 0, 0, 'running', NOW())
-        ");
+            VALUES ($campaign_id, {$counts['total_valid']}, {$counts['pending']}, {$counts['sent']}, {$counts['failed']}, 'running', NOW())");
     }
 
-    // Start background process
-    $command = "php email_blaster.php $campaign_id > /dev/null 2>&1 &";
-    exec($command);
+    // Start the email blaster process
+    startEmailBlasterProcess($campaign_id);
 
     $message = "Campaign #$campaign_id started successfully!";
     $message_type = 'success';
 }
 
+function getEmailCounts($conn, $campaign_id)
+{
+    $result = $conn->query("
+        SELECT 
+            COUNT(*) as total_valid,
+            SUM(CASE WHEN (mb.status IS NULL OR mb.status = 'failed' AND mb.attempt_count < 3) THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN mb.status = 'success' THEN 1 ELSE 0 END) as sent,
+            SUM(CASE WHEN mb.status = 'failed' AND mb.attempt_count >= 3 THEN 1 ELSE 0 END) as failed
+        FROM emails e
+        LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
+        WHERE e.domain_status = 1
+    ");
+    return $result->fetch_assoc();
+}
+
+// function startEmailBlasterProcess($campaign_id) {
+//     // Check if process is already running
+//     $output = shell_exec("pgrep -f 'email_blaster.php $campaign_id'");
+//     if (empty($output)) {
+//         // Start new process in background
+//         $command = "php email_blaster.php $campaign_id > /dev/null 2>&1 &";
+//         exec($command);
+//     }
+// }
+
+
+// Instead of just exec(), consider:
+function startEmailBlasterProcess($campaign_id)
+{
+    $lock_file = "/tmp/email_blaster_{$campaign_id}.lock";
+
+    // Check if process is already running
+    if (file_exists($lock_file)) {
+        $pid = file_get_contents($lock_file);
+        if (posix_kill((int) $pid, 0)) {
+            // Process is running
+            return;
+        } else {
+            // Stale lock file
+            unlink($lock_file);
+        }
+    }
+
+    // Full PHP path and script
+    $php_path = '/opt/lampp/bin/php';
+    $script_path = '/opt/lampp/htdocs/email/email_blaster.php';
+
+    // Start new background process
+    $command = "$php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
+    $pid = shell_exec($command);
+
+    // Save PID to lock file
+    if ($pid) {
+        file_put_contents($lock_file, trim($pid));
+    }
+}
 
 
 // Function to pause a campaign
@@ -98,11 +144,14 @@ function pauseCampaign($conn, $campaign_id)
 {
     global $message, $message_type;
 
-    // Only update if the campaign exists and is running
+    // Update status to paused
     $result = $conn->query("UPDATE campaign_status SET status = 'paused' 
               WHERE campaign_id = $campaign_id AND status = 'running'");
 
     if ($conn->affected_rows > 0) {
+        // Kill the running email blaster process
+        stopEmailBlasterProcess($campaign_id);
+
         $message = "Campaign #$campaign_id paused successfully!";
         $message_type = 'success';
     } else {
@@ -111,17 +160,28 @@ function pauseCampaign($conn, $campaign_id)
     }
 }
 
-// Function to retry failed emails
-function retryFailedEmails($conn, $campaign_id)
+function stopEmailBlasterProcess($campaign_id)
 {
+    // Find and kill the process
+    exec("pkill -f 'email_blaster.php $campaign_id'");
+}
+
+// Function to retry failed emails
+
+// Replace the existing retryFailedEmails() function with this improved version:
+function retryFailedEmails($conn, $campaign_id) {
     global $message, $message_type;
 
-    // Get count of failed emails
+    // First ensure the status column is large enough
+    $conn->query("ALTER TABLE mail_blaster MODIFY COLUMN status VARCHAR(20) NOT NULL");
+
+    // Get count of eligible failed emails (attempt_count < 3)
     $result = $conn->query("
         SELECT COUNT(*) as failed_count 
         FROM mail_blaster 
         WHERE campaign_id = $campaign_id 
         AND status = 'failed'
+        AND attempt_count < 3
     ");
     $failed_count = $result->fetch_assoc()['failed_count'];
 
@@ -129,25 +189,35 @@ function retryFailedEmails($conn, $campaign_id)
         // Mark failed emails for retry
         $conn->query("
             UPDATE mail_blaster 
-            SET status = 'pending', error_message = NULL, attempt_count = attempt_count + 1
-            WHERE campaign_id = $campaign_id AND status = 'failed'
+            SET status = 'pending', 
+                error_message = NULL, 
+                attempt_count = attempt_count + 1
+            WHERE campaign_id = $campaign_id 
+            AND status = 'failed'
+            AND attempt_count < 3
         ");
 
         // Update campaign status
         $conn->query("
             UPDATE campaign_status 
             SET pending_emails = pending_emails + $failed_count,
-                failed_emails = failed_emails - $failed_count
+                failed_emails = GREATEST(0, failed_emails - $failed_count),
+                status = 'running'
             WHERE campaign_id = $campaign_id
         ");
 
         $message = "Retrying $failed_count failed emails for campaign #$campaign_id";
         $message_type = 'success';
+        
+        // Restart the email processing
+        startEmailBlasterProcess($campaign_id);
     } else {
-        $message = "No failed emails to retry for campaign #$campaign_id";
+        $message = "No eligible failed emails to retry for campaign #$campaign_id";
         $message_type = 'info';
     }
 }
+
+
 
 // Get all campaigns with their status
 $campaigns = [];
@@ -167,8 +237,9 @@ $result = $conn->query("
 
 while ($row = $result->fetch_assoc()) {
     // Calculate progress percentage
-    $total = $row['total_emails'] ?: 1;
-    $sent = $row['sent_emails'] ?: 0;
+    // In your HTML/PHP code where you calculate progress:
+    $total = max($row['total_emails'], 1); // Ensure we never divide by zero
+    $sent = min($row['sent_emails'], $total); // Ensure sent never exceeds total
     $row['progress'] = round(($sent / $total) * 100);
     $campaigns[] = $row;
 }
@@ -380,7 +451,6 @@ $conn->close();
                                     </form>
 
 
-
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -388,6 +458,10 @@ $conn->close();
                 </table>
             </div>
         </div>
+
+
+
+
 
         <!-- Campaign Details -->
         <?php if ($campaign_details): ?>
@@ -508,7 +582,7 @@ $conn->close();
                         }
                     });
             }
-        }, 10000);
+        }, 5000);
     </script>
 
 </body>
