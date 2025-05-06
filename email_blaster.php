@@ -15,6 +15,9 @@ $db->set_charset("utf8mb4");
 $campaign_id = isset($argv[1]) ? intval($argv[1]) : die("No campaign ID specified");
 
 // Main processing loop
+
+
+// Main processing loop
 while (true) {
     try {
         // Check campaign status with more comprehensive data
@@ -41,6 +44,13 @@ while (true) {
         if ($status !== 'running') {
             logMessage("Campaign status is '$status'. Exiting process.");
             break;
+        }
+
+        // Check network connectivity before proceeding
+        if (!checkNetworkConnectivity()) {
+            logMessage("Network connection unavailable. Waiting to retry...", 'WARNING');
+            sleep(60); // Wait longer when network is down
+            continue;
         }
 
         // Verify if there are actually emails left to send
@@ -83,111 +93,153 @@ while (true) {
 
     } catch (Exception $e) {
         logMessage("Error in main loop: " . $e->getMessage(), 'ERROR');
-        sleep(60);
+        sleep(60); // Wait longer on errors
     }
 }
+
+function checkNetworkConnectivity()
+{
+    // Check if we can connect to a reliable host (like Google DNS)
+    $connected = @fsockopen("8.8.8.8", 53, $errno, $errstr, 5);
+    if ($connected) {
+        fclose($connected);
+        return true;
+    }
+    return false;
+}
+
+
+
+
+
 
 function processEmailBatch($db, $campaign_id)
 {
     $processed_count = 0;
-    $db->begin_transaction();
+    $max_retries = 3;
+    $retry_count = 0;
+    $success = false;
 
-    try {
-        // Get campaign details
-        $result = $db->query("SELECT mail_subject, mail_body FROM campaign_master WHERE campaign_id = $campaign_id");
-        if ($result->num_rows === 0) {
-            throw new Exception("Campaign not found");
-        }
-        $campaign = $result->fetch_assoc();
+    while ($retry_count < $max_retries && !$success) {
+        try {
+            // Set shorter lock timeout
+            $db->query("SET SESSION innodb_lock_wait_timeout = 10");
+            $db->begin_transaction();
 
-        // Get active SMTP server
-        $smtp = getNextSmtpServer($db);
-        if (!$smtp) {
-            logMessage("No active SMTP servers available");
-            $db->commit();
-            return 0;
-        }
+            // Get campaign details
+            $result = $db->query("SELECT mail_subject, mail_body FROM campaign_master WHERE campaign_id = $campaign_id");
+            if ($result->num_rows === 0) {
+                throw new Exception("Campaign not found");
+            }
+            $campaign = $result->fetch_assoc();
 
-        // Check sending limits
-        if (!checkSendingLimits($db, $smtp['id'])) {
-            $db->commit();
-            return 0;
-        }
+            // Get active SMTP server
+            $smtp = getNextSmtpServer($db);
+            if (!$smtp) {
+                logMessage("No active SMTP servers available");
+                $db->commit();
+                return 0;
+            }
 
-        // Get next batch of pending emails
-        $emails = getNextEmailBatch($db, $campaign_id, 10);
+            // Check sending limits
+            if (!checkSendingLimits($db, $smtp['id'])) {
+                $db->commit();
+                return 0;
+            }
 
-        if (empty($emails)) {
-            $db->commit();
-            return 0;
-        }
+            // Get next batch of pending emails
+            $emails = getNextEmailBatch($db, $campaign_id, 10);
 
-        foreach ($emails as $email) {
-            try {
-                // Check if this email was already successfully sent
-                $check = $db->query("
-                    SELECT id, status, attempt_count 
-                    FROM mail_blaster 
-                    WHERE campaign_id = $campaign_id 
-                    AND to_mail = '" . $db->real_escape_string($email['raw_emailid']) . "'
-                    LIMIT 1
-                ");
+            if (empty($emails)) {
+                $db->commit();
+                return 0;
+            }
 
-                $existing = $check->num_rows > 0 ? $check->fetch_assoc() : null;
+            foreach ($emails as $email) {
+                try {
+                    // Check if this email was already successfully sent
+                    $check = $db->query("
+                        SELECT id, status, attempt_count 
+                        FROM mail_blaster 
+                        WHERE campaign_id = $campaign_id 
+                        AND to_mail = '" . $db->real_escape_string($email['raw_emailid']) . "'
+                        LIMIT 1
+                    ");
 
-                if ($existing && $existing['status'] === 'success') {
-                    continue;
+                    $existing = $check->num_rows > 0 ? $check->fetch_assoc() : null;
+
+                    if ($existing && $existing['status'] === 'success') {
+                        continue;
+                    }
+
+                    if ($existing && $existing['attempt_count'] >= 3) {
+                        continue;
+                    }
+
+                    // Check campaign status again
+                    $status_check = $db->query("SELECT status FROM campaign_status WHERE campaign_id = $campaign_id LIMIT 1");
+                    if ($status_check->num_rows === 0 || $status_check->fetch_assoc()['status'] !== 'running') {
+                        logMessage("Campaign paused or stopped during processing");
+                        break;
+                    }
+
+                    // Send email
+                    sendEmail($smtp, $email['raw_emailid'], $campaign['mail_subject'], $campaign['mail_body']);
+
+                    // Record successful delivery
+                    recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'success');
+
+                    // Update campaign status
+                    $db->query("UPDATE campaign_status 
+                               SET sent_emails = sent_emails + 1, 
+                                   pending_emails = GREATEST(0, pending_emails - 1) 
+                               WHERE campaign_id = $campaign_id");
+
+                    logMessage("Sent to {$email['raw_emailid']}");
+                    $processed_count++;
+
+                    usleep(500000);
+
+                } catch (Exception $e) {
+                    recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'failed', $e->getMessage());
+
+                    $db->query("UPDATE campaign_status 
+                               SET failed_emails = failed_emails + 1, 
+                                   pending_emails = GREATEST(0, pending_emails - 1) 
+                               WHERE campaign_id = $campaign_id");
+
+                    logMessage("Failed to send to {$email['raw_emailid']}: " . $e->getMessage(), 'ERROR');
                 }
+            }
 
-                if ($existing && $existing['attempt_count'] >= 3) {
-                    continue;
+            $db->commit();
+            $success = true;
+
+        } catch (mysqli_sql_exception $e) {
+            $db->rollback();
+
+            if (strpos($e->getMessage(), 'Lock wait timeout exceeded') !== false) {
+                $retry_count++;
+                logMessage("Lock timeout on batch processing attempt $retry_count for campaign $campaign_id. Retrying...", 'WARNING');
+                sleep(1); // Wait before retrying
+
+                if ($retry_count >= $max_retries) {
+                    logMessage("Failed to process batch after $max_retries attempts due to lock timeout", 'ERROR');
+                    return 0;
                 }
-
-                // Check campaign status again
-                $status_check = $db->query("SELECT status FROM campaign_status WHERE campaign_id = $campaign_id LIMIT 1");
-                if ($status_check->num_rows === 0 || $status_check->fetch_assoc()['status'] !== 'running') {
-                    logMessage("Campaign paused or stopped during processing");
-                    break;
-                }
-
-                // Send email
-                sendEmail($smtp, $email['raw_emailid'], $campaign['mail_subject'], $campaign['mail_body']);
-
-                // Record successful delivery
-                recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'success');
-
-                // Update campaign status
-                $db->query("UPDATE campaign_status 
-                           SET sent_emails = sent_emails + 1, 
-                               pending_emails = GREATEST(0, pending_emails - 1) 
-                           WHERE campaign_id = $campaign_id");
-
-                logMessage("Sent to {$email['raw_emailid']}");
-                $processed_count++;
-
-                usleep(500000);
-
-            } catch (Exception $e) {
-                recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'failed', $e->getMessage());
-
-                $db->query("UPDATE campaign_status 
-                           SET failed_emails = failed_emails + 1, 
-                               pending_emails = GREATEST(0, pending_emails - 1) 
-                           WHERE campaign_id = $campaign_id");
-
-                logMessage("Failed to send to {$email['raw_emailid']}: " . $e->getMessage(), 'ERROR');
+            } else {
+                logMessage("Database error processing batch: " . $e->getMessage(), 'ERROR');
+                return 0;
             }
         }
-
-        $db->commit();
-        return $processed_count;
-
-    } catch (Exception $e) {
-        $db->rollback();
-        logMessage("Transaction failed: " . $e->getMessage(), 'ERROR');
-        return 0;
     }
+
+    // Reset to default timeout
+    $db->query("SET SESSION innodb_lock_wait_timeout = 50");
+
+    return $processed_count;
 }
+
 
 function getNextSmtpServer($db)
 {
@@ -256,41 +308,68 @@ function checkSendingLimits($db, $smtpId)
 
     return true;
 }
+
+
+
+// function getNextEmailBatch($db, $campaign_id, $limit)
+// {
+//     $result = $db->query("
+//         SELECT e.id, e.raw_emailid
+//         FROM emails e
+//         LEFT JOIN mail_blaster mb ON 
+//             mb.to_mail = e.raw_emailid AND 
+//             mb.campaign_id = $campaign_id
+//         WHERE e.domain_status = 1
+//         AND (
+//             mb.id IS NULL OR 
+//             (mb.status IN ('failed', 'pending') AND mb.attempt_count < 3)
+//         )
+//         AND NOT EXISTS (
+//             SELECT 1 FROM mail_blaster mb2 
+//             WHERE mb2.to_mail = e.raw_emailid 
+//             AND mb2.campaign_id = $campaign_id
+//             AND mb2.status = 'success'
+//         )
+//         ORDER BY mb.attempt_count ASC, mb.id ASC
+//         LIMIT $limit
+//     ");
+
+//     if ($result === false) {
+//         throw new Exception("Database error: " . $db->error);
+//     }
+
+//     return $result->fetch_all(MYSQLI_ASSOC);
+// }
+
 function getNextEmailBatch($db, $campaign_id, $limit)
 {
-    $stmt = $db->prepare("
+    $result = $db->query("
         SELECT e.id, e.raw_emailid
         FROM emails e
-        LEFT JOIN mail_blaster mb 
-            ON mb.to_mail = e.raw_emailid AND mb.campaign_id = ?
+        LEFT JOIN mail_blaster mb ON 
+            mb.to_mail = e.raw_emailid AND 
+            mb.campaign_id = $campaign_id
         WHERE e.domain_status = 1
         AND (
             mb.id IS NULL OR 
-            (mb.status = 'failed' AND mb.attempt_count < 3) OR 
-            (mb.status = 'pending')
+            (mb.status IN ('failed', 'pending') AND mb.attempt_count < 3)
         )
         AND NOT EXISTS (
             SELECT 1 FROM mail_blaster mb2 
             WHERE mb2.to_mail = e.raw_emailid 
-              AND mb2.campaign_id = ?
-              AND mb2.status = 'success'
+            AND mb2.campaign_id = $campaign_id
+            AND mb2.status = 'success'
         )
-        LIMIT ?
+        ORDER BY mb.attempt_count ASC, mb.id ASC
+        LIMIT $limit
     ");
 
-    if (!$stmt) {
-        throw new Exception("Prepare failed: " . $db->error);
+    $emails = [];
+    while ($row = $result->fetch_assoc()) {
+        $emails[] = $row;
     }
 
-    $stmt->bind_param("iii", $campaign_id, $campaign_id, $limit);
-    $stmt->execute();
-    
-    $result = $stmt->get_result();
-    if ($result === false) {
-        throw new Exception("Execution failed: " . $stmt->error);
-    }
-
-    return $result->fetch_all(MYSQLI_ASSOC);
+    return $emails;
 }
 
 
@@ -300,12 +379,17 @@ function sendEmail($smtp, $to_email, $subject, $body)
     $mail = new PHPMailer(true);
 
     try {
+        // Configure SMTP with timeout settings
         $mail->isSMTP();
         $mail->Host = $smtp['host'];
         $mail->Port = $smtp['port'];
         $mail->SMTPAuth = true;
         $mail->Username = $smtp['email'];
         $mail->Password = $smtp['password'];
+
+        // Set timeouts (in seconds)
+        $mail->Timeout = 30; // Socket connection timeout
+        $mail->SMTPKeepAlive = true; // Keep connection alive for multiple emails
 
         if ($smtp['encryption'] === 'ssl') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
@@ -323,68 +407,145 @@ function sendEmail($smtp, $to_email, $subject, $body)
             throw new Exception($mail->ErrorInfo);
         }
     } catch (Exception $e) {
-        throw new Exception("PHPMailer error: " . $e->getMessage());
+        // Check for network-related errors
+        $errorMessage = $e->getMessage();
+        if (
+            strpos($errorMessage, 'Connection timed out') !== false ||
+            strpos($errorMessage, 'Failed to connect to server') !== false ||
+            strpos($errorMessage, 'SMTP Error: Could not connect to SMTP host') !== false
+        ) {
+            throw new Exception("Network error: " . $errorMessage);
+        } else {
+            throw new Exception("SMTP error: " . $errorMessage);
+        }
     }
 }
 
 
+// function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status, $error = null)
+// {
+//     $escaped_email = $db->real_escape_string($to_email);
+//     $escaped_status = $db->real_escape_string($status);
+//     $escaped_error = $error !== null ? "'" . $db->real_escape_string($error) . "'" : "NULL";
+
+//     // Determine if this is a network failure
+//     $is_network_failure = ($error !== null && strpos($error, 'Network error:') !== false);
+
+//     // Insert or update mail_blaster table
+//     $query = "
+//         INSERT INTO mail_blaster 
+//         (campaign_id, to_mail, smtpid, delivery_date, delivery_time, status, error_message, attempt_count)
+//         VALUES (
+//             $campaignId, 
+//             '$escaped_email', 
+//             $smtpId, 
+//             CURDATE(), 
+//             CURTIME(), 
+//             '$escaped_status', 
+//             $escaped_error,
+//             1
+//         )
+//         ON DUPLICATE KEY UPDATE
+//             smtpid = VALUES(smtpid),
+//             delivery_date = VALUES(delivery_date),
+//             delivery_time = VALUES(delivery_time),
+//             status = IF(status = 'success', 'success', VALUES(status)),
+//             error_message = VALUES(error_message),
+//             attempt_count = IF(status = 'success', attempt_count, attempt_count + 1)
+//     ";
+
+//     if (!$db->query($query)) {
+//         throw new Exception("Failed to record delivery: " . $db->error);
+//     }
+
+//     // Only count as failed if not a network error (we'll retry these)
+//     if ($status === 'failed' && !$is_network_failure) {
+//         $db->query("UPDATE campaign_status 
+//                    SET failed_emails = failed_emails + 1, 
+//                        pending_emails = GREATEST(0, pending_emails - 1) 
+//                    WHERE campaign_id = $campaignId");
+//     }
+
+//     // Insert log into sending_logs table
+//     $log_query = "
+//         INSERT INTO sending_logs 
+//         (campaign_id, email_id, smtp_id, status, sent_at, error_message)
+//         VALUES (
+//             $campaignId, 
+//             $emailId, 
+//             $smtpId, 
+//             '$escaped_status', 
+//             NOW(), 
+//             $escaped_error
+//         )
+//     ";
+
+//     if (!$db->query($log_query)) {
+//         throw new Exception("Failed to record in sending_logs: " . $db->error);
+//     }
+
+//     // Only update SMTP usage if successful
+//     if ($status === 'success') {
+//         updateSmtpUsage($db, $smtpId);
+//     }
+// }
+
 function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status, $error = null)
 {
-    // Escape email and error message for SQL safety
-    $escaped_email = $db->real_escape_string($to_email);
-    $escaped_status = $db->real_escape_string($status);
-    $escaped_error = $error !== null ? "'" . $db->real_escape_string($error) . "'" : "NULL";
+    $is_network_failure = ($error !== null && strpos($error, 'Network error:') !== false);
 
-    // Insert or update mail_blaster table
+    // Step 1: Insert or update mail_blaster
     $query = "
         INSERT INTO mail_blaster 
         (campaign_id, to_mail, smtpid, delivery_date, delivery_time, status, error_message, attempt_count)
-        VALUES (
-            $campaignId, 
-            '$escaped_email', 
-            $smtpId, 
-            CURDATE(), 
-            CURTIME(), 
-            '$escaped_status', 
-            $escaped_error,
-            1
-        )
+        VALUES (?, ?, ?, CURDATE(), CURTIME(), ?, ?, 1)
         ON DUPLICATE KEY UPDATE
             smtpid = VALUES(smtpid),
             delivery_date = VALUES(delivery_date),
             delivery_time = VALUES(delivery_time),
-            status = VALUES(status),
+            status = IF(mail_blaster.status = 'success', 'success', VALUES(status)),
             error_message = VALUES(error_message),
-            attempt_count = attempt_count + 1
+            attempt_count = IF(mail_blaster.status = 'success', mail_blaster.attempt_count, mail_blaster.attempt_count + 1)
     ";
+    $stmt = $db->prepare($query);
+    $stmt->bind_param("isisss", $campaignId, $to_email, $smtpId, $status, $error);
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to record delivery: " . $stmt->error);
+    }
+    $stmt->close();
 
-    if (!$db->query($query)) {
-        throw new Exception("Failed to record delivery: " . $db->error);
+    // Step 2: Update campaign_status (only if failed and not network error)
+    if ($status === 'failed' && !$is_network_failure) {
+        $status_update = "
+            UPDATE campaign_status 
+            SET failed_emails = failed_emails + 1, 
+                pending_emails = GREATEST(0, pending_emails - 1) 
+            WHERE campaign_id = ?
+        ";
+        $stmt2 = $db->prepare($status_update);
+        $stmt2->bind_param("i", $campaignId);
+        $stmt2->execute();
+        $stmt2->close();
     }
 
-    // Insert log into sending_logs table
+    // Step 3: Insert into sending_logs (keep all attempts)
     $log_query = "
         INSERT INTO sending_logs 
         (campaign_id, email_id, smtp_id, status, sent_at, error_message)
-        VALUES (
-            $campaignId, 
-            $emailId, 
-            $smtpId, 
-            '$escaped_status', 
-            NOW(), 
-            $escaped_error
-        )
+        VALUES (?, ?, ?, ?, NOW(), ?)
     ";
-
-    if (!$db->query($log_query)) {
-        throw new Exception("Failed to record in sending_logs: " . $db->error);
+    $stmt3 = $db->prepare($log_query);
+    $stmt3->bind_param("iiiss", $campaignId, $emailId, $smtpId, $status, $error);
+    if (!$stmt3->execute()) {
+        throw new Exception("Failed to record in sending_logs: " . $stmt3->error);
     }
+    $stmt3->close();
 
-    // Update SMTP usage
-    updateSmtpUsage($db, $smtpId);
+    // Step 4: Update SMTP usage
+    if ($status === 'success') {
+        updateSmtpUsage($db, $smtpId);
+    }
 }
-
-
 
 
 function updateSmtpUsage($db, $smtpId)
