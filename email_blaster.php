@@ -567,19 +567,19 @@ function updateSmtpUsage($db, $smtpId)
 }
 
 
-function logMessage($message, $level = 'INFO')
-{
-    if (!file_exists('logs')) {
-        mkdir('logs', 0755, true);
-    }
+// function logMessage($message, $level = 'INFO')
+// {
+//     if (!file_exists('logs')) {
+//         mkdir('logs', 0755, true);
+//     }
 
-    $log = "[" . date('Y-m-d H:i:s') . "] [$level] " . $message . "\n";
-    $campaign_id = $GLOBALS['campaign_id'] ?? 'unknown';
-    file_put_contents("logs/campaign_{$campaign_id}.log", $log, FILE_APPEND);
+//     $log = "[" . date('Y-m-d H:i:s') . "] [$level] " . $message . "\n";
+//     $campaign_id = $GLOBALS['campaign_id'] ?? 'unknown';
+//     file_put_contents("logs/campaign_{$campaign_id}.log", $log, FILE_APPEND);
 
-    if (php_sapi_name() === 'cli') {
-        echo $log;
-    }
-}
+//     if (php_sapi_name() === 'cli') {
+//         echo $log;
+//     }
+// }
 
 $db->close();

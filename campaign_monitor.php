@@ -568,10 +568,6 @@ $conn->close();
             </div>
         </div>
 
-
-
-
-
         <!-- Campaign Details -->
         <?php if ($campaign_details): ?>
             <div class="bg-white rounded-lg shadow overflow-hidden mb-8">

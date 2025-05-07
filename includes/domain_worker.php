@@ -17,7 +17,7 @@ while ($row = $domains->fetch_assoc()) {
     }
 
     $status = $ip ? 1 : 0;
-    $response = $ip ?: "Invalid responce";
+    $response = $ip ?: "Invalid";
 
     $conn->query("UPDATE emails SET 
                      domain_verified = 1,
