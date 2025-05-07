@@ -1,0 +1,16 @@
+[2025-05-07 12:53:47] [INFO] Campaign status is 'paused'. Exiting process.
+[2025-05-07 12:53:59] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:53:59] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:54:34] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:54:34] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:55:08] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:55:08] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:55:42] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:55:42] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:56:16] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:56:16] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:56:51] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:56:51] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:57:25] [ERROR] Database error processing batch: Field 'id' doesn't have a default value
+[2025-05-07 12:57:25] [INFO] No emails processed in this batch. Possible rate limiting.
+[2025-05-07 12:57:55] [INFO] Campaign status is 'paused'. Exiting process.

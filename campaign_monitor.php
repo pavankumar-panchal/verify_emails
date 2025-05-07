@@ -99,19 +99,19 @@ function startCampaign($conn, $campaign_id)
 
             if (strpos($e->getMessage(), 'Lock wait timeout exceeded') !== false) {
                 $retry_count++;
-                logMessage("Lock timeout on start attempt $retry_count for campaign $campaign_id. Retrying...", 'WARNING');
+                // logMessage("Lock timeout on start attempt $retry_count for campaign $campaign_id. Retrying...", 'WARNING');
                 sleep(1); // Wait before retrying
 
                 if ($retry_count >= $max_retries) {
                     $message = "Failed to start campaign #$campaign_id after $max_retries attempts due to lock timeout";
                     $message_type = 'error';
-                    logMessage($message, 'ERROR');
+                    // logMessage($message, 'ERROR');
                 }
             } else {
                 // Other database errors
                 $message = "Database error starting campaign #$campaign_id: " . $e->getMessage();
                 $message_type = 'error';
-                logMessage($message, 'ERROR');
+                // logMessage($message, 'ERROR');
                 break;
             }
         }
@@ -151,7 +151,7 @@ function getEmailCounts($conn, $campaign_id)
 // }
 
 
-// Instead of just exec(), consider:
+
 function startEmailBlasterProcess($campaign_id)
 {
     $lock_file = "/tmp/email_blaster_{$campaign_id}.lock";
@@ -168,12 +168,12 @@ function startEmailBlasterProcess($campaign_id)
         }
     }
 
-    // Full PHP path and script
-    $php_path = '/opt/lampp/bin/php';
-    $script_path = '/opt/lampp/htdocs/email/email_blaster.php';
+    // Use absolute paths
+    $php_path = '/opt/lampp/bin/php'; // Adjust this to your PHP path (run 'which php' to find it)
+    $script_path = __DIR__ . '/email_blaster.php'; // Use absolute path to script
 
     // Start new background process
-    $command = "$php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
+    $command = "nohup $php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
     $pid = shell_exec($command);
 
     // Save PID to lock file
@@ -181,6 +181,41 @@ function startEmailBlasterProcess($campaign_id)
         file_put_contents($lock_file, trim($pid));
     }
 }
+
+
+
+
+// function startEmailBlasterProcess($campaign_id)
+// {
+//     $lock_file = "/tmp/email_blaster_{$campaign_id}.lock";
+
+//     // Check if process is already running
+//     if (file_exists($lock_file)) {
+//         $pid = file_get_contents($lock_file);
+//         if (posix_kill((int) $pid, 0)) {
+//             // Process is running
+//             return;
+//         } else {
+//             // Stale lock file
+//             unlink($lock_file);
+//         }
+//     }
+
+//     // Use absolute paths
+//     $php_path = '/opt/lampp/bin/php'; // Adjust this to your PHP path (run 'which php' to find it)
+//     $script_path = __DIR__ . '/email_blaster.php'; // Use absolute path to script
+
+//     // Start new background process
+//     $command = "nohup $php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
+//     $pid = shell_exec($command);
+
+//     // Save PID to lock file
+//     if ($pid) {
+//         file_put_contents($lock_file, trim($pid));
+//     }
+// }
+
+
 
 
 // Function to pause a campaign
@@ -244,19 +279,19 @@ function pauseCampaign($conn, $campaign_id)
 
             if (strpos($e->getMessage(), 'Lock wait timeout exceeded') !== false) {
                 $retry_count++;
-                logMessage("Lock timeout on pause attempt $retry_count for campaign $campaign_id. Retrying...", 'WARNING');
+                // logMessage("Lock timeout on pause attempt $retry_count for campaign $campaign_id. Retrying...", 'WARNING');
                 sleep(1); // Wait before retrying
 
                 if ($retry_count >= $max_retries) {
                     $message = "Failed to pause campaign #$campaign_id after $max_retries attempts due to lock timeout";
                     $message_type = 'error';
-                    logMessage($message, 'ERROR');
+                    // logMessage($message, 'ERROR');
                 }
             } else {
                 // Other database errors
                 $message = "Database error pausing campaign #$campaign_id: " . $e->getMessage();
                 $message_type = 'error';
-                logMessage($message, 'ERROR');
+                // logMessage($message, 'ERROR');
                 break;
             }
         }
@@ -273,23 +308,21 @@ function stopEmailBlasterProcess($campaign_id)
     exec("pkill -f 'email_blaster.php $campaign_id'");
 }
 
-// Function to retry failed emails
 
-// Replace the existing retryFailedEmails() function with this improved version:
+
+
+
 
 function retryFailedEmails($conn, $campaign_id)
 {
     global $message, $message_type;
 
-    // First ensure the status column is large enough
-    $conn->query("ALTER TABLE mail_blaster MODIFY COLUMN status VARCHAR(20) NOT NULL");
-
-    // Get count of eligible failed emails (attempt_count < 3)
+    // First get count of eligible failed emails (attempt_count < 3)
     $result = $conn->query("
         SELECT COUNT(*) as failed_count 
         FROM mail_blaster 
         WHERE campaign_id = $campaign_id 
-        AND (status = 'failed' OR status = 'pending')
+        AND status = 'failed'
         AND attempt_count < 3
     ");
     $failed_count = $result->fetch_assoc()['failed_count'];
@@ -299,9 +332,10 @@ function retryFailedEmails($conn, $campaign_id)
         $conn->query("
             UPDATE mail_blaster 
             SET status = 'pending', 
-                error_message = NULL
+                error_message = NULL,
+                attempt_count = attempt_count + 1
             WHERE campaign_id = $campaign_id 
-            AND (status = 'failed' OR status = 'pending')
+            AND status = 'failed'
             AND attempt_count < 3
         ");
 
@@ -324,6 +358,56 @@ function retryFailedEmails($conn, $campaign_id)
         $message_type = 'info';
     }
 }
+
+// Replace the existing retryFailedEmails() function with this improved version:
+
+// function retryFailedEmails($conn, $campaign_id)
+// {
+//     global $message, $message_type;
+
+//     // First ensure the status column is large enough
+//     $conn->query("ALTER TABLE mail_blaster MODIFY COLUMN status VARCHAR(20) NOT NULL");
+
+//     // Get count of eligible failed emails (attempt_count < 3)
+//     $result = $conn->query("
+//         SELECT COUNT(*) as failed_count 
+//         FROM mail_blaster 
+//         WHERE campaign_id = $campaign_id 
+//         AND (status = 'failed' OR status = 'pending')
+//         AND attempt_count < 3
+//     ");
+//     $failed_count = $result->fetch_assoc()['failed_count'];
+
+//     if ($failed_count > 0) {
+//         // Mark failed emails for retry
+//         $conn->query("
+//             UPDATE mail_blaster 
+//             SET status = 'pending', 
+//                 error_message = NULL
+//             WHERE campaign_id = $campaign_id 
+//             AND (status = 'failed' OR status = 'pending')
+//             AND attempt_count < 3
+//         ");
+
+//         // Update campaign status
+//         $conn->query("
+//             UPDATE campaign_status 
+//             SET pending_emails = pending_emails + $failed_count,
+//                 failed_emails = GREATEST(0, failed_emails - $failed_count),
+//                 status = 'running'
+//             WHERE campaign_id = $campaign_id
+//         ");
+
+//         $message = "Retrying $failed_count failed emails for campaign #$campaign_id";
+//         $message_type = 'success';
+
+//         // Restart the email processing
+//         startEmailBlasterProcess($campaign_id);
+//     } else {
+//         $message = "No eligible failed emails to retry for campaign #$campaign_id";
+//         $message_type = 'info';
+//     }
+// }
 
 
 
@@ -384,6 +468,10 @@ if (isset($_GET['view'])) {
 
 $conn->close();
 ?>
+
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
