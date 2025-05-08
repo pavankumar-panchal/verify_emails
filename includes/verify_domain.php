@@ -73,7 +73,7 @@ function createDomainWorkerScript()
         }
         
         $status = $ip ? 1 : 0;
-        $response = $ip ?: "Invalid";
+        $response = $ip ?: "Not valid domain";
         
         $conn->query("UPDATE emails SET 
                      domain_verified = 1,

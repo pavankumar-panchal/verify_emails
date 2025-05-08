@@ -5,12 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Split & Verification</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
-
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
     <link rel="stylesheet" href="assets/style.css">
     <link rel="stylesheet" href="assets/main.css">
-
     <link rel="stylesheet" href="assets/style_tailwind.css">
 
     <style>
@@ -18,9 +14,7 @@
             display: block;
             width: 100%;
             color: #6B7280;
-            /* Tailwind's gray-500 */
             font-size: 0.875rem;
-            /* text-sm */
             border: none;
             padding: 0;
             background-color: transparent;
@@ -32,9 +26,7 @@
             border: none;
             border-radius: 0.375rem;
             background-color: #EFF6FF;
-            /* Tailwind's blue-50 */
             color: #1D4ED8;
-            /* Tailwind's blue-700 */
             font-weight: 600;
             font-size: 0.875rem;
             cursor: pointer;
@@ -43,10 +35,7 @@
 
         .custom-file-input::file-selector-button:hover {
             background-color: #DBEAFE;
-            /* Tailwind's blue-100 */
         }
-
-        /* Navbar styles */
 
         /* Progress overlay styles */
         .progress-overlay {
@@ -118,11 +107,8 @@
     </style>
 </head>
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
-    <?php
-    include 'navbar.php';
-    ?>
-
+<body class="bg-gray-100 flex items-center justify-center">
+    <?php include 'navbar.php'; ?>
 
     <div id="progressOverlay" class="progress-overlay hidden">
         <div class="circle-loader">
@@ -136,15 +122,9 @@
         <div class="progress-label" id="progressLabel">Processing Emails</div>
     </div>
 
-
     <div class="mt-4 w-full max-w-6xl">
-        <!-- <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
-            <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
-        </h2> -->
         <!-- File Upload Section -->
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-
-
             <form id="csvForm" class="flex flex-col items-center w-full" enctype="multipart/form-data">
                 <div class="w-full max-w-md mb-4">
                     <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
@@ -157,16 +137,12 @@
                 <div class="flex space-x-4 mb-3">
                     <!-- Upload & Process Button -->
                     <button type="submit" id="uploadBtn"
-                        onclick="triggerDomainVerification(),fetchProgress(),checkVerificationConfirmation()"
                         class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition flex items-center justify-center min-w-[150px]">
                         <span id="uploadText">Upload & Process</span>
                         <div id="uploadSpinner" class="loader ml-2 hidden"></div>
                     </button>
-
-
                 </div>
             </form>
-
 
             <div id="statusMessage" class="hidden mt-4 text-center p-3 rounded-md"></div>
         </div>
@@ -188,7 +164,6 @@
                             class="pl-10 border border-gray-300 p-2 rounded-md w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="flex gap-2">
-
                         <button id="exportValidBtn"
                             class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center">
                             <i class="fas fa-file-export mr-2"></i>Export Valid
@@ -245,7 +220,6 @@
                 <div class="loader mx-auto"></div>
                 <p class="mt-2 text-gray-500">Loading email data...</p>
             </div>
-
         </div>
 
         <!-- Pagination Controls -->
@@ -291,57 +265,6 @@
     </div>
 
     <script>
-
-
-
-        function processCSVAndVerify() {
-            const formData = new FormData();
-            const fileInput = document.querySelector('#csvFile'); // make sure this is your CSV input ID
-            formData.append("file", fileInput.files[0]);
-
-            // Step 1: Upload CSV and save emails
-            fetch("email_processor.php", {
-                method: "POST",
-                body: formData
-            })
-                .then(response => response.text())
-                .then(saveResponse => {
-                    console.log("CSV Save Response:", saveResponse);
-
-                    // Step 2: Only after CSV is saved, verify domains
-                    return fetch("includes/verify_domain.php");
-                })
-                .then(response => response.text())
-                .then(verifyResponse => {
-                    alert("Verification completed: " + verifyResponse);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("Something went wrong!");
-                });
-        }
-
-        function triggerDomainVerification() {
-            fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showStatusMessage("Verification process started!", "success");
-                        setTimeout(() => {
-                            fetchProgress();  // Start checking progress after 5 seconds
-                        }, 10000);
-                    } else {
-                        showStatusMessage("Error starting verification process.", "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error triggering domain verification:", error);
-                    showStatusMessage("Error triggering domain verification.", "error");
-                });
-        }
-
-        // Progress Tracking
-
         const progressOverlay = document.getElementById('progressOverlay');
         const progressText = document.getElementById('progressText');
         const progressLabel = document.getElementById('progressLabel');
@@ -369,8 +292,6 @@
             progressCircle.style.strokeDashoffset = offset;
             progressText.textContent = `${p}%`;
         }
-
-
 
         function showStatusMessage(message, type = 'info') {
             statusMessage.textContent = message;
@@ -408,9 +329,8 @@
                         setTimeout(() => {
                             hideProgressOverlay();
                             showStatusMessage("Verification completed successfully!", "success");
-                            fetchEmails(); // Optional: Refresh the email list
                             setTimeout(() => {
-                                location.reload(); // 🔄 Reload after short delay
+                                location.reload();
                             }, 1000);
                         }, 1000);
                     }
@@ -422,7 +342,6 @@
                     showStatusMessage("Error checking verification progress", "error");
                 });
         }
-
 
         // Handle form submit
         csvForm.addEventListener('submit', function (e) {
@@ -502,33 +421,9 @@
                 clearInterval(progressInterval);
             }
         });
-
-        // function checkVerificationConfirmation() {
-        //     fetch('includes/domain_verify_log.txt?rand=' + Math.random())
-        //         .then(response => response.text())
-        //         .then(log => {
-        //             if (log.includes("Script Triggered")) {
-        //                 alert('✅ verify_domain.php was actually executed.');
-        //             } else {
-        //                 alert('❌ Script not yet executed.');
-        //             }
-        //         })
-        //         .catch(error => {
-        //             console.error(error);
-        //             alert('❌ Could not check domain verification status.');
-        //         });
-        // }
-
-
-
-
     </script>
 
     <script src="./assets/script.js"></script>
-
-
-
-
 </body>
 
 </html>

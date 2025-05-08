@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-
 function setupEventListeners() {
     document.getElementById("csvForm").addEventListener("submit", handleFileUpload);
     elements.searchInput.addEventListener("input", debounce(() => {

@@ -4,6 +4,9 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE");
 header("Access-Control-Allow-Headers: Content-Type");
 
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 require 'db.php';
 
 // Clear any previous output
@@ -50,9 +53,8 @@ try {
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 
-// Close connection and flush buffer
-$cmd = "nohup php -q includes/verify_domain.php > /dev/null 2>&1 & echo $!";
-$pid = shell_exec($cmd);
+startBackgroundDomainVerification();
+
 
 $conn->close();
 ob_end_flush();
@@ -123,6 +125,8 @@ function normalizeGmail($email)
 
     return $account . '@gmail.com';
 }
+
+
 function handlePostRequest()
 {
     global $conn;
@@ -191,10 +195,10 @@ function handlePostRequest()
         }
 
         // Validate account name
-        if (!isValidAccountName($sp_account, $sp_domain)) {
+        if (!isValidAccountName($sp_account)) {
             $domain_verified = 1;
             $domain_status = 0;
-            $validation_response = "Invalid";
+            $validation_response = "No MX record";
             $invalid_account_count++;
 
             $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
@@ -241,36 +245,37 @@ function handlePostRequest()
     ];
 }
 
-// function startBackgroundDomainVerification()
-// {
-//     // Get the absolute path to the verify_domain.php script
-//     $scriptPath = realpath(__DIR__ . './includes/verify_domain.php');
+function startBackgroundDomainVerification()
+{
+    // Get the absolute path to the verify_domain.php script
+    $scriptPath = realpath(__DIR__ . '/includes/verify_domain.php');
 
-//     if (!$scriptPath) {
-//         error_log("verify_domain.php not found.");
-//         return;
-//     }
 
-//     // Build the background command using nohup and redirect all output to /dev/null
-//     $cmd = "nohup php -q " . escapeshellarg($scriptPath) . " > /dev/null 2>&1 & echo $!";
+    if (!$scriptPath) {
+        error_log("verify_domain.php not found.");
+        return;
+    }
 
-//     $pid = null;
+    // Build the background command using nohup and redirect all output to /dev/null
+    $cmd = "nohup php -q " . escapeshellarg($scriptPath) . " > /dev/null 2>&1 & echo $!";
 
-//     // Try executing the command using shell_exec or exec
-//     if (function_exists('shell_exec')) {
-//         $pid = trim(shell_exec($cmd));
-//     } elseif (function_exists('exec')) {
-//         exec($cmd, $output, $return_var);
-//         $pid = isset($output[0]) ? trim($output[0]) : null;
-//     }
+    $pid = null;
 
-//     // Optional: Log the PID or error
-//     if ($pid) {
-//         error_log("Background process started with PID: $pid");
-//     } else {
-//         error_log("Failed to start background process for verify_domain.php");
-//     }
-// }
+    // Try executing the command using shell_exec or exec
+    if (function_exists('shell_exec')) {
+        $pid = trim(shell_exec($cmd));
+    } elseif (function_exists('exec')) {
+        exec($cmd, $output, $return_var);
+        $pid = isset($output[0]) ? trim($output[0]) : null;
+    }
+
+    // Optional: Log the PID or error
+    if ($pid) {
+        error_log("Background process started with PID: $pid");
+    } else {
+        error_log("Failed to start background process for verify_domain.php");
+    }
+}
 
 
 function handleGetRequest()
@@ -327,38 +332,9 @@ function getDomainIP($domain)
     return ($aRecord !== $domain) ? $aRecord : false;
 }
 
-function startBackgroundDomainVerification()
-{
-    $scriptPath = __DIR__ . '/verify_domain.php';
 
-    // Check if the script exists
-    if (!file_exists($scriptPath)) {
-        error_log("Error: verify_domain.php not found at: $scriptPath");
-        return false;
-    }
+// $conn->close();
 
-    // Run the script in the background depending on the OS
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        // Windows - escape the script path properly
-        $command = "start /B php \"" . escapeshellcmd($scriptPath) . "\"";
-        pclose(popen($command, "r"));
-    } else {
-        // Unix/Linux - use nohup to ensure it continues after terminal is closed
-        $command = "nohup php " . escapeshellcmd($scriptPath) . " > /dev/null 2>&1 &";
-        exec($command);
-    }
-
-    return true;
-}
-
-// Call it after insertion
-if ($inserted_count > 0) {
-    startBackgroundDomainVerification();
-}
-
-$conn->close();
-
-exec('php  ./includes/verify_domain.php > /dev/null 2>&1 &');
 
 
 ?>

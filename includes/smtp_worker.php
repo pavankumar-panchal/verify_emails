@@ -22,7 +22,7 @@ while ($row = $emails->fetch_assoc()) {
         $message = $conn->real_escape_string($verification['message']);
     } else {
         $status = 0;
-        $message = "Invalid";
+        $message = "Invalid responce";
     }
 
     echo "domain_status = $status, validation_response = $message\n";
@@ -99,7 +99,7 @@ function verifyEmailViaSMTP($email, $domain)
     if ($result === 1) {
         return ["status" => "success", "result" => 1, "message" => $mxIP];
     } else {
-        return ["status" => "success", "result" => 0, "message" => "Invalid"];
+        return ["status" => "success", "result" => 0, "message" => "Invalid responce"];
     }
 }
 ?>
