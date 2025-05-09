@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Split & Verification</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
 
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
     <link rel="stylesheet" href="assets/style.css">
     <link rel="stylesheet" href="assets/main.css">
 
@@ -503,21 +501,7 @@
             }
         });
 
-        // function checkVerificationConfirmation() {
-        //     fetch('includes/domain_verify_log.txt?rand=' + Math.random())
-        //         .then(response => response.text())
-        //         .then(log => {
-        //             if (log.includes("Script Triggered")) {
-        //                 alert('✅ verify_domain.php was actually executed.');
-        //             } else {
-        //                 alert('❌ Script not yet executed.');
-        //             }
-        //         })
-        //         .catch(error => {
-        //             console.error(error);
-        //             alert('❌ Could not check domain verification status.');
-        //         });
-        // }
+
 
 
 

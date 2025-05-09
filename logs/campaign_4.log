@@ -1,0 +1,5 @@
+[2025-05-09 10:40:20] [INFO] All valid emails processed. Campaign completed.
+[2025-05-09 12:30:41] [INFO] Hourly limit reached for SMTP 1 (10/10)
+[2025-05-09 12:30:41] [INFO] Hourly limit reached for SMTP 5 (10/10)
+[2025-05-09 12:30:41] [INFO] Hourly limit reached for SMTP 2 (10/10)
+[2025-05-09 12:30:59] [INFO] All valid emails processed. Campaign completed.

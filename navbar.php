@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email System</title>
+    <title>Emails</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -155,7 +155,7 @@
                 <!-- Brand/Logo -->
                 <div class="brand">
                     <i class="fas fa-envelope brand-icon"></i>
-                    <span class="brand-text">Email System</span>
+                    <span class="brand-text">Email</span>
                 </div>
 
                 <!-- Desktop Navigation -->
@@ -171,6 +171,9 @@
                     </a>
                     <a href="campaigns.php" class="nav-link" id="desktop-campaigns">
                         <i class="fas fa-bullhorn"></i> Campaigns
+                    </a>
+                    <a href="campaign_monitor.php" class="nav-link" id="desktop-campaigns_monitor">
+                        <i class="fas fa-chart-line"></i> Campaigns Monitor
                     </a>
                 </div>
 
@@ -194,6 +197,9 @@
             </a>
             <a href="campaigns.php" class="mobile-nav-link" id="mobile-campaigns">
                 <i class="fas fa-bullhorn"></i> Campaigns
+            </a>
+            <a href="campaign_monitor.php" class="mobile-nav-link" id="mobile-campaigns_monitor">
+                <i class="fas fa-chart-line"></i> Campaigns Monitor
             </a>
         </div>
     </nav>
@@ -226,6 +232,10 @@
                 case 'campaigns.php':
                     document.getElementById('desktop-campaigns').classList.add('active');
                     document.getElementById('mobile-campaigns').classList.add('active');
+                    break;
+                case 'campaign_monitor.php':
+                    document.getElementById('desktop-campaigns_monitor').classList.add('active');
+                    document.getElementById('mobile-campaigns_monitor').classList.add('active');
                     break;
                 default:
                     // For index page when it's just '/'

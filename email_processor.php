@@ -191,10 +191,10 @@ function handlePostRequest()
         }
 
         // Validate account name
-        if (!isValidAccountName($sp_account, $sp_domain)) {
+        if (!isValidAccountName($sp_account)) {
             $domain_verified = 1;
             $domain_status = 0;
-            $validation_response = "Invalid response";
+            $validation_response = "Invalid";
             $invalid_account_count++;
 
             $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
@@ -240,6 +240,8 @@ function handlePostRequest()
         "skipped" => $skipped_count
     ];
 }
+
+
 
 // function startBackgroundDomainVerification()
 // {
@@ -327,9 +329,40 @@ function getDomainIP($domain)
     return ($aRecord !== $domain) ? $aRecord : false;
 }
 
+// function startBackgroundDomainVerification()
+// {
+//     $scriptPath = __DIR__ . '/verify_domain.php';
+
+//     // Check if the script exists
+//     if (!file_exists($scriptPath)) {
+//         error_log("Error: verify_domain.php not found at: $scriptPath");
+//         return false;
+//     }
+
+//     // Run the script in the background depending on the OS
+//     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+//         // Windows - escape the script path properly
+//         $command = "start /B php \"" . escapeshellcmd($scriptPath) . "\"";
+//         pclose(popen($command, "r"));
+//     } else {
+//         // Unix/Linux - use nohup to ensure it continues after terminal is closed
+//         $command = "nohup php " . escapeshellcmd($scriptPath) . " > /dev/null 2>&1 &";
+//         exec($command);
+//     }
+
+//     return true;
+// }
+
+// // Call it after insertion
+// if ($inserted_count > 0) {
+//     startBackgroundDomainVerification();
+// }
+
+
 function startBackgroundDomainVerification()
 {
     $scriptPath = __DIR__ . '/verify_domain.php';
+    $logPath = __DIR__ . '/verify_domain_log.txt';
 
     // Check if the script exists
     if (!file_exists($scriptPath)) {
@@ -337,24 +370,28 @@ function startBackgroundDomainVerification()
         return false;
     }
 
-    // Run the script in the background depending on the OS
+    // Choose the correct PHP binary
+    $phpPath = '/opt/lampp/bin/php'; // Full path to your PHP CLI
+
     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        // Windows - escape the script path properly
-        $command = "start /B php \"" . escapeshellcmd($scriptPath) . "\"";
+        // Windows
+        $command = "start /B \"$phpPath\" \"" . escapeshellarg($scriptPath) . "\"";
         pclose(popen($command, "r"));
     } else {
-        // Unix/Linux - use nohup to ensure it continues after terminal is closed
-        $command = "nohup php " . escapeshellcmd($scriptPath) . " > /dev/null 2>&1 &";
+        // Unix/Linux
+        $command = "nohup $phpPath -q " . escapeshellarg($scriptPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         exec($command);
     }
 
     return true;
 }
 
-// Call it after insertion
+// Call it after successful insertion
 if ($inserted_count > 0) {
     startBackgroundDomainVerification();
 }
+
+
 
 $conn->close();
 

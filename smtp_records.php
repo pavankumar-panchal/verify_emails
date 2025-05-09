@@ -234,14 +234,10 @@ $conn->close();
       background-color: #3b82f6;
       color: white;
     }
-
-    .nav-link.active:hover {
-      background-color: #2563eb;
-    }
   </style>
 </head>
 
-<body class="antialiased bg-gray-50 ">
+<body class="antialiased bg-gray-100 ">
   <!-- Navbar -->
   <?php include 'navbar.php'; ?>
 
