@@ -1,8 +1,5 @@
 <?php
-// file_put_contents(__DIR__ . '/domain_verify_log.txt', date('Y-m-d H:i:s') . " - Script Triggered\n", FILE_APPEND);
-file_put_contents("verify_log.txt", date("Y-m-d H:i:s") . " - verify_domain.php started in: " . getcwd() . "\n", FILE_APPEND);
 
-// Add your domain verification logic here
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -16,7 +13,7 @@ require './db.php';
 
 
 // Configuration
-define('MAX_WORKERS', 50); // Number of parallel processes
+define('MAX_WORKERS', 10); // Number of parallel processes
 define('BATCH_SIZE', 100); // Domains per worker
 define('WORKER_SCRIPT', __DIR__ . '/domain_worker.php');
 
@@ -45,7 +42,6 @@ function getDomainIP($domain)
             return $mxIp;
         }
     }
-
     // Fallback to A record
     $aRecord = @gethostbyname($domain);
     return ($aRecord !== $domain) ? $aRecord : false;

@@ -8,7 +8,7 @@ $conn->set_charset("utf8mb4");
 
 // Initialize message variables
 $message = '';
-$message_type = ''; // 'success' or 'error'
+$message_type = '';
 
 // Handle campaign actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -28,9 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Function to start a campaign
 
-// In startCampaign() function
 
 function startCampaign($conn, $campaign_id)
 {
@@ -70,19 +68,19 @@ function startCampaign($conn, $campaign_id)
             if ($status_check->num_rows > 0) {
                 // Update existing campaign status to running
                 $conn->query("UPDATE campaign_status SET 
-                    status = 'running',
-                    total_emails = {$counts['total_valid']},
-                    pending_emails = {$counts['pending']},
-                    sent_emails = {$counts['sent']},
-                    failed_emails = {$counts['failed']},
-                    start_time = IFNULL(start_time, NOW()),
-                    end_time = NULL
-                    WHERE campaign_id = $campaign_id");
+                        status = 'running',
+                        total_emails = {$counts['total_valid']},
+                        pending_emails = {$counts['pending']},
+                        sent_emails = {$counts['sent']},
+                        failed_emails = {$counts['failed']},
+                        start_time = IFNULL(start_time, NOW()),
+                        end_time = NULL
+                        WHERE campaign_id = $campaign_id");
             } else {
                 // Create new campaign status
                 $conn->query("INSERT INTO campaign_status 
-                    (campaign_id, total_emails, pending_emails, sent_emails, failed_emails, status, start_time)
-                    VALUES ($campaign_id, {$counts['total_valid']}, {$counts['pending']}, {$counts['sent']}, {$counts['failed']}, 'running', NOW())");
+                        (campaign_id, total_emails, pending_emails, sent_emails, failed_emails, status, start_time)
+                        VALUES ($campaign_id, {$counts['total_valid']}, {$counts['pending']}, {$counts['sent']}, {$counts['failed']}, 'running', NOW())");
             }
 
             $conn->commit();
@@ -128,28 +126,17 @@ function startCampaign($conn, $campaign_id)
 function getEmailCounts($conn, $campaign_id)
 {
     $result = $conn->query("
-        SELECT 
-            COUNT(*) as total_valid,
-            SUM(CASE WHEN (mb.status IS NULL OR mb.status = 'failed' AND mb.attempt_count < 3) THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN mb.status = 'success' THEN 1 ELSE 0 END) as sent,
-            SUM(CASE WHEN mb.status = 'failed' AND mb.attempt_count >= 3 THEN 1 ELSE 0 END) as failed
-        FROM emails e
-        LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
-        WHERE e.domain_status = 1
-    ");
+            SELECT 
+                COUNT(*) as total_valid,
+                SUM(CASE WHEN (mb.status IS NULL OR mb.status = 'failed' AND mb.attempt_count < 3) THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN mb.status = 'success' THEN 1 ELSE 0 END) as sent,
+                SUM(CASE WHEN mb.status = 'failed' AND mb.attempt_count >= 3 THEN 1 ELSE 0 END) as failed
+            FROM emails e
+            LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
+            WHERE e.domain_status = 1
+        ");
     return $result->fetch_assoc();
 }
-
-// function startEmailBlasterProcess($campaign_id) {
-//     // Check if process is already running
-//     $output = shell_exec("pgrep -f 'email_blaster.php $campaign_id'");
-//     if (empty($output)) {
-//         // Start new process in background
-//         $command = "php email_blaster.php $campaign_id > /dev/null 2>&1 &";
-//         exec($command);
-//     }
-// }
-
 
 
 function startEmailBlasterProcess($campaign_id)
@@ -158,7 +145,7 @@ function startEmailBlasterProcess($campaign_id)
 
     // Check if process is already running
     if (file_exists($lock_file)) {
-        $pid = file_get_contents($lock_file);
+        $pid = file_get_contents(filename: $lock_file);
         if (posix_kill((int) $pid, 0)) {
             // Process is running
             return;
@@ -169,8 +156,8 @@ function startEmailBlasterProcess($campaign_id)
     }
 
     // Use absolute paths
-    $php_path = '/opt/lampp/bin/php'; // Adjust this to your PHP path (run 'which php' to find it)
-    $script_path = __DIR__ . '/email_blaster.php'; // Use absolute path to script
+    $php_path = '/opt/lampp/bin/php';
+    $script_path = __DIR__ . '/email_blaster.php';
 
     // Start new background process
     $command = "nohup $php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
@@ -181,64 +168,6 @@ function startEmailBlasterProcess($campaign_id)
         file_put_contents($lock_file, trim($pid));
     }
 }
-
-
-
-
-// function startEmailBlasterProcess($campaign_id)
-// {
-//     $lock_file = "/tmp/email_blaster_{$campaign_id}.lock";
-
-//     // Check if process is already running
-//     if (file_exists($lock_file)) {
-//         $pid = file_get_contents($lock_file);
-//         if (posix_kill((int) $pid, 0)) {
-//             // Process is running
-//             return;
-//         } else {
-//             // Stale lock file
-//             unlink($lock_file);
-//         }
-//     }
-
-//     // Use absolute paths
-//     $php_path = '/opt/lampp/bin/php'; // Adjust this to your PHP path (run 'which php' to find it)
-//     $script_path = __DIR__ . '/email_blaster.php'; // Use absolute path to script
-
-//     // Start new background process
-//     $command = "nohup $php_path $script_path $campaign_id > /dev/null 2>&1 & echo $!";
-//     $pid = shell_exec($command);
-
-//     // Save PID to lock file
-//     if ($pid) {
-//         file_put_contents($lock_file, trim($pid));
-//     }
-// }
-
-
-
-
-// Function to pause a campaign
-// function pauseCampaign($conn, $campaign_id)
-// {
-//     global $message, $message_type;
-
-//     // Update status to paused
-//     $result = $conn->query("UPDATE campaign_status SET status = 'paused' 
-//               WHERE campaign_id = $campaign_id AND status = 'running'");
-
-//     if ($conn->affected_rows > 0) {
-//         // Kill the running email blaster process
-//         stopEmailBlasterProcess($campaign_id);
-
-//         $message = "Campaign #$campaign_id paused successfully!";
-//         $message_type = 'success';
-//     } else {
-//         $message = "Campaign #$campaign_id is not running or doesn't exist";
-//         $message_type = 'error';
-//     }
-// }
-
 
 
 function pauseCampaign($conn, $campaign_id)
@@ -257,7 +186,7 @@ function pauseCampaign($conn, $campaign_id)
 
             // Update status to paused
             $result = $conn->query("UPDATE campaign_status SET status = 'paused' 
-                  WHERE campaign_id = $campaign_id AND status = 'running'");
+                    WHERE campaign_id = $campaign_id AND status = 'running'");
 
             if ($conn->affected_rows > 0) {
                 // Kill the running email blaster process
@@ -319,34 +248,34 @@ function retryFailedEmails($conn, $campaign_id)
 
     // First get count of eligible failed emails (attempt_count < 3)
     $result = $conn->query("
-        SELECT COUNT(*) as failed_count 
-        FROM mail_blaster 
-        WHERE campaign_id = $campaign_id 
-        AND status = 'failed'
-        AND attempt_count < 3
-    ");
+            SELECT COUNT(*) as failed_count 
+            FROM mail_blaster 
+            WHERE campaign_id = $campaign_id 
+            AND status = 'failed'
+            AND attempt_count < 3
+        ");
     $failed_count = $result->fetch_assoc()['failed_count'];
 
     if ($failed_count > 0) {
         // Mark failed emails for retry
         $conn->query("
-            UPDATE mail_blaster 
-            SET status = 'pending', 
-                error_message = NULL,
-                attempt_count = attempt_count + 1
-            WHERE campaign_id = $campaign_id 
-            AND status = 'failed'
-            AND attempt_count < 3
-        ");
+                UPDATE mail_blaster 
+                SET status = 'pending', 
+                    error_message = NULL,
+                    attempt_count = attempt_count + 1
+                WHERE campaign_id = $campaign_id 
+                AND status = 'failed'
+                AND attempt_count < 3
+            ");
 
         // Update campaign status
         $conn->query("
-            UPDATE campaign_status 
-            SET pending_emails = pending_emails + $failed_count,
-                failed_emails = GREATEST(0, failed_emails - $failed_count),
-                status = 'running'
-            WHERE campaign_id = $campaign_id
-        ");
+                UPDATE campaign_status 
+                SET pending_emails = pending_emails + $failed_count,
+                    failed_emails = GREATEST(0, failed_emails - $failed_count),
+                    status = 'running'
+                WHERE campaign_id = $campaign_id
+            ");
 
         $message = "Retrying $failed_count failed emails for campaign #$campaign_id";
         $message_type = 'success';
@@ -359,74 +288,24 @@ function retryFailedEmails($conn, $campaign_id)
     }
 }
 
-// Replace the existing retryFailedEmails() function with this improved version:
-
-// function retryFailedEmails($conn, $campaign_id)
-// {
-//     global $message, $message_type;
-
-//     // First ensure the status column is large enough
-//     $conn->query("ALTER TABLE mail_blaster MODIFY COLUMN status VARCHAR(20) NOT NULL");
-
-//     // Get count of eligible failed emails (attempt_count < 3)
-//     $result = $conn->query("
-//         SELECT COUNT(*) as failed_count 
-//         FROM mail_blaster 
-//         WHERE campaign_id = $campaign_id 
-//         AND (status = 'failed' OR status = 'pending')
-//         AND attempt_count < 3
-//     ");
-//     $failed_count = $result->fetch_assoc()['failed_count'];
-
-//     if ($failed_count > 0) {
-//         // Mark failed emails for retry
-//         $conn->query("
-//             UPDATE mail_blaster 
-//             SET status = 'pending', 
-//                 error_message = NULL
-//             WHERE campaign_id = $campaign_id 
-//             AND (status = 'failed' OR status = 'pending')
-//             AND attempt_count < 3
-//         ");
-
-//         // Update campaign status
-//         $conn->query("
-//             UPDATE campaign_status 
-//             SET pending_emails = pending_emails + $failed_count,
-//                 failed_emails = GREATEST(0, failed_emails - $failed_count),
-//                 status = 'running'
-//             WHERE campaign_id = $campaign_id
-//         ");
-
-//         $message = "Retrying $failed_count failed emails for campaign #$campaign_id";
-//         $message_type = 'success';
-
-//         // Restart the email processing
-//         startEmailBlasterProcess($campaign_id);
-//     } else {
-//         $message = "No eligible failed emails to retry for campaign #$campaign_id";
-//         $message_type = 'info';
-//     }
-// }
-
 
 
 
 // Get all campaigns with their status
 $campaigns = [];
 $result = $conn->query("
-    SELECT cm.*, 
-           COALESCE(cs.status, 'pending') as campaign_status, 
-           COALESCE(cs.total_emails, 0) as total_emails, 
-           COALESCE(cs.pending_emails, 0) as pending_emails, 
-           COALESCE(cs.sent_emails, 0) as sent_emails, 
-           COALESCE(cs.failed_emails, 0) as failed_emails,
-           cs.start_time, 
-           cs.end_time
-    FROM campaign_master cm
-    LEFT JOIN campaign_status cs ON cm.campaign_id = cs.campaign_id
-    ORDER BY cm.campaign_id DESC
-");
+        SELECT cm.*, 
+            COALESCE(cs.status, 'pending') as campaign_status, 
+            COALESCE(cs.total_emails, 0) as total_emails, 
+            COALESCE(cs.pending_emails, 0) as pending_emails, 
+            COALESCE(cs.sent_emails, 0) as sent_emails, 
+            COALESCE(cs.failed_emails, 0) as failed_emails,
+            cs.start_time, 
+            cs.end_time
+        FROM campaign_master cm
+        LEFT JOIN campaign_status cs ON cm.campaign_id = cs.campaign_id
+        ORDER BY cm.campaign_id DESC
+    ");
 
 while ($row = $result->fetch_assoc()) {
     // Calculate progress percentage
@@ -442,24 +321,24 @@ $campaign_details = null;
 if (isset($_GET['view'])) {
     $campaign_id = intval($_GET['view']);
     $result = $conn->query("
-        SELECT cm.*, cs.*
-        FROM campaign_master cm
-        LEFT JOIN campaign_status cs ON cm.campaign_id = cs.campaign_id
-        WHERE cm.campaign_id = $campaign_id
-    ");
+            SELECT cm.*, cs.*
+            FROM campaign_master cm
+            LEFT JOIN campaign_status cs ON cm.campaign_id = cs.campaign_id
+            WHERE cm.campaign_id = $campaign_id
+        ");
     $campaign_details = $result->fetch_assoc();
 
     // Get recent logs for this campaign
     $logs = [];
     $result = $conn->query("
-        SELECT mb.*, e.raw_emailid, s.name as smtp_name
-        FROM mail_blaster mb
-        JOIN emails e ON mb.to_mail = e.raw_emailid
-        LEFT JOIN smtp_servers s ON mb.smtpid = s.id
-        WHERE mb.campaign_id = $campaign_id
-        ORDER BY mb.delivery_date DESC, mb.delivery_time DESC
-        LIMIT 100
-    ");
+            SELECT mb.*, e.raw_emailid, s.name as smtp_name
+            FROM mail_blaster mb
+            JOIN emails e ON mb.to_mail = e.raw_emailid
+            LEFT JOIN smtp_servers s ON mb.smtpid = s.id
+            WHERE mb.campaign_id = $campaign_id
+            ORDER BY mb.delivery_date DESC, mb.delivery_time DESC
+            LIMIT 100
+        ");
     while ($row = $result->fetch_assoc()) {
         $logs[] = $row;
     }

@@ -4,7 +4,7 @@ require './db.php';
 global $conn;
 
 // Configuration
-define('MAX_WORKERS', 50); // Number of parallel processes
+define('MAX_WORKERS', 10); // Number of parallel processes
 define('BATCH_SIZE', 100); // Emails per worker
 define('WORKER_SCRIPT', __DIR__ . '/smtp_worker.php');
 

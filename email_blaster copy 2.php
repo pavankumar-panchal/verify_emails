@@ -230,6 +230,7 @@ function processEmailBatch($db, $campaign_id, &$smtp_windows)
     }
 }
 
+
 function getNextSmtpServer($db, &$smtp_windows)
 {
     $servers = $db->query("
@@ -239,6 +240,14 @@ function getNextSmtpServer($db, &$smtp_windows)
     ")->fetch_all(MYSQLI_ASSOC);
 
     foreach ($servers as $server) {
+        // Initialize window if not exists
+        if (!isset($smtp_windows[$server['id']])) {
+            $smtp_windows[$server['id']] = [
+                'start_time' => time(),
+                'count' => 0
+            ];
+        }
+
         // Check daily limit
         $daily_sent = $db->query("
             SELECT SUM(emails_sent) as total 
@@ -247,32 +256,15 @@ function getNextSmtpServer($db, &$smtp_windows)
             AND date = CURDATE()
         ")->fetch_assoc()['total'] ?? 0;
 
-        if ($daily_sent >= $server['daily_limit']) {
-            logMessage("Daily limit reached for SMTP {$server['id']} ($daily_sent/{$server['daily_limit']})");
-            continue;
-        }
-
-        // Check hourly limit
-        $current_hour = date('G');
-        $hourly_sent = $db->query("
-            SELECT emails_sent as total 
-            FROM smtp_usage 
-            WHERE smtp_id = {$server['id']} 
-            AND date = CURDATE() 
-            AND hour = $current_hour
-        ")->fetch_assoc()['total'] ?? 0;
-
-        if ($hourly_sent < $server['hourly_limit']) {
+        if ($daily_sent < $server['daily_limit']) {
             return $server;
         } else {
-            logMessage("Hourly limit reached for SMTP {$server['id']} ($hourly_sent/{$server['hourly_limit']})");
+            logMessage("Daily limit reached for SMTP {$server['id']} ($daily_sent/{$server['daily_limit']})");
         }
     }
 
     return null;
 }
-
-
 
 function checkSendingLimits($db, $smtpId, &$smtp_windows)
 {
@@ -282,9 +274,8 @@ function checkSendingLimits($db, $smtpId, &$smtp_windows)
         WHERE id = $smtpId
     ")->fetch_assoc();
 
-    if (!$server) {
+    if (!$server)
         return false;
-    }
 
     // Check daily limit
     $daily_sent = $db->query("
@@ -299,23 +290,25 @@ function checkSendingLimits($db, $smtpId, &$smtp_windows)
         return false;
     }
 
-    // Check hourly limit using the database (more reliable than in-memory tracking)
-    $current_hour = date('G');
-    $hourly_sent = $db->query("
-        SELECT emails_sent as total 
-        FROM smtp_usage 
-        WHERE smtp_id = $smtpId 
-        AND date = CURDATE() 
-        AND hour = $current_hour
-    ")->fetch_assoc()['total'] ?? 0;
+    // Check hourly rolling window
+    $window = &$smtp_windows[$smtpId];
+    $elapsed = time() - $window['start_time'];
 
-    if ($hourly_sent >= $server['hourly_limit']) {
-        logMessage("Hourly limit reached for SMTP $smtpId ($hourly_sent/{$server['hourly_limit']})");
+    if ($elapsed >= 3600) { // Reset window if expired
+        logMessage("Resetting hourly window for SMTP $smtpId");
+        $window['start_time'] = time();
+        $window['count'] = 0;
+    }
+
+    if ($window['count'] >= $server['hourly_limit']) {
+        logMessage("Hourly limit reached for SMTP $smtpId ({$window['count']}/{$server['hourly_limit']})");
         return false;
     }
 
+    $window['count']++;
     return true;
 }
+
 function sendEmail($smtp, $to_email, $subject, $body)
 {
     $mail = new PHPMailer(true);
@@ -348,8 +341,6 @@ function sendEmail($smtp, $to_email, $subject, $body)
         throw new Exception("SMTP error: " . $e->getMessage());
     }
 }
-
-
 
 function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status, $error = null)
 {
@@ -389,29 +380,20 @@ function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status,
         )
     ");
 
-    // Update SMTP usage with exact timestamp (only for successful sends)
+    // Update SMTP usage with exact timestamp
     if ($status === 'success') {
-        $current_hour = date('G');
         $db->query("
             INSERT INTO smtp_usage 
-            (smtp_id, date, hour, timestamp, emails_sent)
+            (smtp_id, date, timestamp, emails_sent)
             VALUES (
                 $smtpId,
                 CURDATE(),
-                $current_hour,
                 NOW(),
                 1
             )
-            ON DUPLICATE KEY UPDATE
-                emails_sent = emails_sent + 1,
-                timestamp = VALUES(timestamp)
         ");
     }
 }
-
-
-
-
 
 function logMessage($message, $level = 'INFO')
 {
