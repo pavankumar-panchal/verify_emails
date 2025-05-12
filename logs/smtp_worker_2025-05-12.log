@@ -1,0 +1,136 @@
+[2025-05-12 11:59:03] [Worker 22030] Starting worker process with offset: 0, limit: 100
+[2025-05-12 11:59:03] [Worker 22030] Worker process completed
+[2025-05-12 12:02:34] [Worker 22673] Starting worker process with offset: 0, limit: 100
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Processing email
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Starting verification
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Connecting to MX: indianbank-co-in.mail.protection.outlook.com (52.101.145.2) on port 25
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] SERVER: 220 PN2PEPF0000018F.mail.protection.outlook.com Microsoft ESMTP MAIL Service ready at Mon, 12 May 2025 10:02:33 +0000 [08DD91358EFC367B]
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] EHLO Response: 250-PN2PEPF0000018F.mail.protection.outlook.com Hello [106.221.196.71]
+250-SIZE 157286400
+250-PIPELINING
+250-DSN
+250-ENHANCEDSTATUSCODES
+250-STARTTLS
+250-8BITMIME
+250-BINARYMIME
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] MAIL FROM Response: 250 2.1.0 Sender OK
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Sent: RCPT TO:<tds@indianbank.co.in>
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] RCPT TO Response: 550 5.7.1 Service unavailable, Client host [106.221.196.71] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/106.221.196.71 AS(1450) [PN2PEPF0000018F.INDPRD01.PROD.OUTLOOK.COM 2025-05-12T10:02:34.339Z 08DD91358EFC367B]
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Invalid response
+[2025-05-12 12:02:34] [Worker 22673] [tds@indianbank.co.in] [indianbank.co.in] Result: Invalid - Invalid response
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Processing email
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Starting verification
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Connecting to MX: indianbank-co-in.mail.protection.outlook.com (52.101.145.2) on port 25
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] SERVER: 220 PN2PEPF0000018D.mail.protection.outlook.com Microsoft ESMTP MAIL Service ready at Mon, 12 May 2025 10:02:34 +0000 [08DD8B18150A48DE]
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] EHLO Response: 250-PN2PEPF0000018D.mail.protection.outlook.com Hello [106.221.196.71]
+250-SIZE 157286400
+250-PIPELINING
+250-DSN
+250-ENHANCEDSTATUSCODES
+250-STARTTLS
+250-8BITMIME
+250-BINARYMIME
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] MAIL FROM Response: 250 2.1.0 Sender OK
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Sent: RCPT TO:<cppc@indianbank.co.in>
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] RCPT TO Response: 550 5.7.1 Service unavailable, Client host [106.221.196.71] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/106.221.196.71 AS(1450) [PN2PEPF0000018D.INDPRD01.PROD.OUTLOOK.COM 2025-05-12T10:02:34.653Z 08DD8B18150A48DE]
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Invalid response
+[2025-05-12 12:02:34] [Worker 22673] [cppc@indianbank.co.in] [indianbank.co.in] Result: Invalid - Invalid response
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Processing email
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Starting verification
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Connecting to MX: indianbank-co-in.mail.protection.outlook.com (52.101.145.2) on port 25
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] SERVER: 220 PN2PEPF0000018D.mail.protection.outlook.com Microsoft ESMTP MAIL Service ready at Mon, 12 May 2025 10:02:34 +0000 [08DD8B18150A4941]
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] EHLO Response: 250-PN2PEPF0000018D.mail.protection.outlook.com Hello [106.221.196.71]
+250-SIZE 157286400
+250-PIPELINING
+250-DSN
+250-ENHANCEDSTATUSCODES
+250-STARTTLS
+250-8BITMIME
+250-BINARYMIME
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] MAIL FROM Response: 250 2.1.0 Sender OK
+[2025-05-12 12:02:34] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Sent: RCPT TO:<cohrmsalary@indianbank.co.in>
+[2025-05-12 12:02:35] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] RCPT TO Response: 550 5.7.1 Service unavailable, Client host [106.221.196.71] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/106.221.196.71 AS(1450) [PN2PEPF0000018D.INDPRD01.PROD.OUTLOOK.COM 2025-05-12T10:02:35.145Z 08DD8B18150A4941]
+[2025-05-12 12:02:35] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [cohrmsalary@indianbank.co.in] [indianbank.co.in] Result: Invalid - Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Processing email
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Starting verification
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Connecting to MX: indianbank-co-in.mail.protection.outlook.com (52.101.144.3) on port 25
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] SERVER: 220 MA1PEPF000072B2.mail.protection.outlook.com Microsoft ESMTP MAIL Service ready at Mon, 12 May 2025 10:02:35 +0000 [08DD8ECB6E1A562E]
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] EHLO Response: 250-MA1PEPF000072B2.mail.protection.outlook.com Hello [106.221.196.71]
+250-SIZE 157286400
+250-PIPELINING
+250-DSN
+250-ENHANCEDSTATUSCODES
+250-STARTTLS
+250-8BITMIME
+250-BINARYMIME
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] MAIL FROM Response: 250 2.1.0 Sender OK
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Sent: RCPT TO:<investors@indianbank.co.in>
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] RCPT TO Response: 550 5.7.1 Service unavailable, Client host [106.221.196.71] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/106.221.196.71 AS(1450) [MA1PEPF000072B2.INDPRD01.PROD.OUTLOOK.COM 2025-05-12T10:02:35.558Z 08DD8ECB6E1A562E]
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [investors@indianbank.co.in] [indianbank.co.in] Result: Invalid - Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Processing email
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Starting verification
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Connecting to MX: indianbank-co-in.mail.protection.outlook.com (52.101.144.0) on port 25
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] SERVER: 220 MA1PEPF00007262.mail.protection.outlook.com Microsoft ESMTP MAIL Service ready at Mon, 12 May 2025 10:02:35 +0000 [08DD8E8E1BA63B56]
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] EHLO Response: 250-MA1PEPF00007262.mail.protection.outlook.com Hello [106.221.196.71]
+250-SIZE 157286400
+250-PIPELINING
+250-DSN
+250-ENHANCEDSTATUSCODES
+250-STARTTLS
+250-8BITMIME
+250-BINARYMIME
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] MAIL FROM Response: 250 2.1.0 Sender OK
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Sent: RCPT TO:<giftcity@indianbank.co.in>
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] RCPT TO Response: 550 5.7.1 Service unavailable, Client host [106.221.196.71] blocked using Spamhaus. To request removal from this list see https://www.spamhaus.org/query/ip/106.221.196.71 AS(1450) [MA1PEPF00007262.INDPRD01.PROD.OUTLOOK.COM 2025-05-12T10:02:35.860Z 08DD8E8E1BA63B56]
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [giftcity@indianbank.co.in] [indianbank.co.in] Result: Invalid - Invalid response
+[2025-05-12 12:02:35] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Processing email
+[2025-05-12 12:02:35] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Starting verification
+[2025-05-12 12:02:36] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Connecting to MX: gmail-smtp-in.l.google.com (64.233.170.27) on port 25
+[2025-05-12 12:02:36] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] SERVER: 220 mx.google.com ESMTP d2e1a72fcca58-74237ca4f24si9989112b3a.339 - gsmtp
+[2025-05-12 12:02:36] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Sent: EHLO server.relyon.co.in
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] EHLO Response: 250-mx.google.com at your service, [106.221.196.71]
+250-SIZE 157286400
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Sent: MAIL FROM:<info@relyon.co.in>
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] MAIL FROM Response: 250 2.1.0 OK d2e1a72fcca58-74237ca4f24si9989112b3a.339 - gsmtp
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Sent: RCPT TO:<panchalpavan7090@gmail.com>
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] RCPT TO Response: 250 2.1.5 OK d2e1a72fcca58-74237ca4f24si9989112b3a.339 - gsmtp
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Verification successful. MX: 64.233.170.27
+[2025-05-12 12:02:37] [Worker 22673] [panchalpavan7090@gmail.com] [gmail.com] Result: Valid - 64.233.170.27
+[2025-05-12 12:02:37] [Worker 22673] Worker process completed
+[2025-05-12 12:38:27] [Worker 26197] Starting worker process with offset: 0, limit: 100
+[2025-05-12 12:38:27] [Worker 26197] Worker process completed
+[2025-05-12 13:01:13] [Worker 28678] Starting worker process with offset: 0, limit: 100
+[2025-05-12 13:01:13] [Worker 28678] Worker process completed
+[2025-05-12 13:07:00] [Worker 29729] Starting worker process with offset: 0, limit: 100
+[2025-05-12 13:07:00] [Worker 29729] Worker process completed
+[2025-05-12 13:48:06] [Worker 34989] Starting worker process with offset: 0, limit: 100
+[2025-05-12 13:48:06] [Worker 34989] Worker process completed
