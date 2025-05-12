@@ -4,8 +4,7 @@ use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
 
-// require 'db.php';
-
+require 'db.php';
 
 // Database configuration
 $db = new mysqli("localhost", "root", "", "email_id");
@@ -273,7 +272,7 @@ function getNextSmtpServer($db, )
 }
 
 
-function checkSendingLimits($db, $smtpId )
+function checkSendingLimits($db, $smtpId)
 {
     $server = $db->query("
         SELECT hourly_limit, daily_limit 
