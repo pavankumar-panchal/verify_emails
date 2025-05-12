@@ -31,7 +31,7 @@ register_shutdown_function(function () use ($pid_file) {
 });
 
 // Track SMTP usage windows
-$smtp_windows = [];
+// $smtp_windows = [];
 
 // Main processing loop
 while (true) {
@@ -84,7 +84,7 @@ while (true) {
         }
 
         // Process emails
-        $processed_count = processEmailBatch($db, $campaign_id, $smtp_windows);
+        $processed_count = processEmailBatch($db, $campaign_id);
 
         // Adjust sleep time based on processing results
         if ($processed_count > 0) {
@@ -115,7 +115,7 @@ function checkNetworkConnectivity()
     return false;
 }
 
-function processEmailBatch($db, $campaign_id, &$smtp_windows)
+function processEmailBatch($db, $campaign_id, )
 {
     $processed_count = 0;
     $max_retries = 3;
@@ -136,7 +136,7 @@ function processEmailBatch($db, $campaign_id, &$smtp_windows)
         }
 
         // Get SMTP server
-        $smtp = getNextSmtpServer($db, $smtp_windows);
+        $smtp = getNextSmtpServer($db);
         if (!$smtp) {
             logMessage("No available SMTP servers within limits");
             $db->commit();
@@ -179,7 +179,7 @@ function processEmailBatch($db, $campaign_id, &$smtp_windows)
                 }
 
                 // Check SMTP limits
-                if (!checkSendingLimits($db, $smtp['id'], $smtp_windows)) {
+                if (!checkSendingLimits($db, $smtp['id'])) {
                     logMessage("SMTP limits reached for server {$smtp['id']}");
                     break;
                 }
@@ -213,10 +213,10 @@ function processEmailBatch($db, $campaign_id, &$smtp_windows)
 
                 logMessage("Failed to send to {$email['raw_emailid']}: " . $e->getMessage(), 'ERROR');
 
-                // If SMTP failed, mark it as potentially problematic
-                if (strpos($e->getMessage(), 'SMTP error') !== false) {
-                    $smtp_windows[$smtp['id']]['last_error'] = time();
-                }
+                // // If SMTP failed, mark it as potentially problematic
+                // if (strpos($e->getMessage(), 'SMTP error') !== false) {
+                //     $smtp_windows[$smtp['id']]['last_error'] = time();
+                // }
             }
         }
 
@@ -230,7 +230,7 @@ function processEmailBatch($db, $campaign_id, &$smtp_windows)
     }
 }
 
-function getNextSmtpServer($db, &$smtp_windows)
+function getNextSmtpServer($db, )
 {
     $servers = $db->query("
         SELECT * FROM smtp_servers 
@@ -273,8 +273,7 @@ function getNextSmtpServer($db, &$smtp_windows)
 }
 
 
-
-function checkSendingLimits($db, $smtpId, &$smtp_windows)
+function checkSendingLimits($db, $smtpId )
 {
     $server = $db->query("
         SELECT hourly_limit, daily_limit 
@@ -377,17 +376,17 @@ function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status,
     ");
 
     // Sending log
-    $db->query("
-        INSERT INTO sending_logs 
-        (campaign_id, email_id, smtp_id, status, error_message)
-        VALUES (
-            $campaignId,
-            $emailId,
-            $smtpId,
-            '" . $db->real_escape_string($status) . "',
-            " . ($error ? "'" . $db->real_escape_string($error) . "'" : "NULL") . "
-        )
-    ");
+    // $db->query("
+    //     INSERT INTO sending_logs 
+    //     (campaign_id, email_id, smtp_id, status, error_message)
+    //     VALUES (
+    //         $campaignId,
+    //         $emailId,
+    //         $smtpId,
+    //         '" . $db->real_escape_string($status) . "',
+    //         " . ($error ? "'" . $db->real_escape_string($error) . "'" : "NULL") . "
+    //     )
+    // ");
 
     // Update SMTP usage with exact timestamp (only for successful sends)
     if ($status === 'success') {

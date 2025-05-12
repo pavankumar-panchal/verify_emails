@@ -13,7 +13,7 @@ require './db.php';
 
 
 // Configuration
-define('MAX_WORKERS', 10); // Number of parallel processes
+define('MAX_WORKERS', 5); // Number of parallel processes
 define('BATCH_SIZE', 100); // Domains per worker
 define('WORKER_SCRIPT', __DIR__ . '/domain_worker.php');
 

@@ -139,11 +139,12 @@ $conn->close();
     </style>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 ">
 
     <?php include 'navbar.php'; ?>
 
-    <div class="container mx-auto px-4 py-8 mt-8 max-w-6xl">
+    <div class="container mx-auto px-4 py-8 mt-8 max-w-6xl ">
+
         <!-- Status Message -->
         <?php if ($message): ?>
             <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
@@ -172,7 +173,7 @@ $conn->close();
         </div>
 
         <!-- Campaigns Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-white rounded-lg shadow overflow-hidden  max-h-screen overflow-y-auto">
             <div class="overflow-x-auto">
                 <table class="min-w-full compact-table divide-y divide-gray-200">
                     <thead class="bg-gray-50">
