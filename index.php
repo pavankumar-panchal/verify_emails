@@ -116,7 +116,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
     <?php
     include 'navbar.php';
     ?>
@@ -201,7 +201,7 @@
         </div>
 
         <!-- Table Section -->
-        <div class="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>

@@ -155,7 +155,7 @@
                 <!-- Brand/Logo -->
                 <div class="brand">
                     <i class="fas fa-envelope brand-icon"></i>
-                    <span class="brand-text">Email</span>
+                    <span class="brand-text">Email System</span>
                 </div>
 
                 <!-- Desktop Navigation -->

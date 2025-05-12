@@ -30,7 +30,7 @@ function logVerification($message, $email = '', $domain = '')
     echo $logMessage;
 }
 
-// SMTP verification function
+// Updated function using stream_socket_client()
 function verifyEmailViaSMTP($email, $domain)
 {
     logVerification("Starting verification", $email, $domain);
@@ -144,7 +144,7 @@ function createWorkerScript()
     
     workerLog("Starting worker process with offset: $offset, limit: $limit");
     
-    $emails = $conn->query("SELECT id, raw_emailid, sp_domain FROM emails WHERE domain_processed=0 LIMIT $offset, $limit");
+    $emails = $conn->query("SELECT id, raw_emailid, sp_domain FROM emails WHERE domain_status=1 AND domain_processed=0 LIMIT $offset, $limit");
     
     while ($row = $emails->fetch_assoc()) {
         $email = $row[\'raw_emailid\'];
@@ -165,6 +165,7 @@ function createWorkerScript()
         workerLog("Result: " . ($status ? "Valid" : "Invalid") . " - $message", $email, $domain);
         
         $conn->query("UPDATE emails SET 
+                     domain_status = $status,
                      validation_response = \'$message\',
                      domain_processed = 1
                      WHERE id = {$row[\'id\']}");
@@ -257,7 +258,7 @@ function createWorkerScript()
     file_put_contents(WORKER_SCRIPT, $workerCode);
 }
 
-// Parallel processing function
+// Parallel processing function with domain processing tracking
 function processEmailsInParallel()
 {
     global $conn;
@@ -267,11 +268,11 @@ function processEmailsInParallel()
     }
 
     // Count only unprocessed emails
-    $total = $conn->query("SELECT COUNT(*) FROM emails WHERE domain_processed = 0")->fetch_row()[0];
+    $total = $conn->query("SELECT COUNT(*) FROM emails WHERE domain_status = 1 AND domain_processed = 0")->fetch_row()[0];
     echo " Total emails to process: $total\n";
 
     if ($total == 0) {
-        echo " All emails have already been processed.\n";
+        echo " All domains have already been processed.\n";
         return;
     }
 
@@ -299,7 +300,7 @@ function resetProcessedStatus()
 {
     global $conn;
     $conn->query("UPDATE emails SET domain_processed = 0");
-    echo "Reset processing status for all emails.\n";
+    echo "Reset processing status for all domains.\n";
 }
 
 // Main execution
@@ -310,6 +311,7 @@ try {
 
     // Uncomment the next line if you need to reset processing status
     // resetProcessedStatus();
+
 
     processEmailsInParallel();
     logVerification("Processing complete");
