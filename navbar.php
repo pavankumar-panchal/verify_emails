@@ -60,31 +60,51 @@
         .brand-text {
             font-weight: 600;
             color: #374151;
+            white-space: nowrap;
         }
 
         /* Desktop navigation */
         .desktop-nav {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            /* For Firefox */
+            -ms-overflow-style: none;
+            /* For IE and Edge */
+        }
+
+        .desktop-nav::-webkit-scrollbar {
+            display: none;
+            /* For Chrome, Safari and Opera */
         }
 
         .nav-link {
             color: #4b5563;
             text-decoration: none;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 4px;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link i {
+            font-size: 1rem;
         }
 
         .nav-link:hover {
             color: #2563eb;
+            background-color: #f0f4ff;
         }
 
         .nav-link.active {
             color: #2563eb;
             background-color: #f0f4ff;
-
         }
 
         /* Mobile menu button */
@@ -96,6 +116,9 @@
             padding: 8px;
             cursor: pointer;
             transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .mobile-menu-button:hover {
@@ -108,6 +131,8 @@
             background-color: white;
             padding: 8px 0;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: calc(100vh - 64px);
+            overflow-y: auto;
         }
 
         .mobile-menu.active {
@@ -115,11 +140,19 @@
         }
 
         .mobile-nav-link {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             color: #4b5563;
             text-decoration: none;
             padding: 12px 16px;
             transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .mobile-nav-link i {
+            width: 20px;
+            text-align: center;
         }
 
         .mobile-nav-link:hover {
@@ -133,6 +166,17 @@
         }
 
         /* Responsive styles */
+        @media (min-width: 1024px) {
+            .desktop-nav {
+                gap: 12px;
+            }
+
+            .nav-link {
+                padding: 8px 12px;
+                font-size: 0.9375rem;
+            }
+        }
+
         @media (min-width: 768px) {
             .mobile-menu-button {
                 display: none;
@@ -142,6 +186,20 @@
         @media (max-width: 767px) {
             .desktop-nav {
                 display: none;
+            }
+
+            .brand-text {
+                font-size: 0.9375rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .brand-text {
+                font-size: 0.875rem;
+            }
+
+            .brand-icon {
+                font-size: 1.1rem;
             }
         }
     </style>
@@ -160,20 +218,20 @@
 
                 <!-- Desktop Navigation -->
                 <div class="desktop-nav">
-                    <a href="index.php" class="nav-link" id="desktop-verification">
-                        <i class="fas fa-check-circle"></i> Verification
+                    <a href="index.php" class="nav-link" id="desktop-verification" title="Verification">
+                        <i class="fas fa-check-circle"></i> <span>Verification</span>
                     </a>
-                    <!-- <a href="send_form.php" class="nav-link" id="desktop-send">
-                        <i class="fas fa-paper-plane"></i> Send
-                    </a> -->
-                    <a href="smtp_records.php" class="nav-link" id="desktop-smtp">
-                        <i class="fas fa-server"></i> SMTP
+                    <a href="smtp_records.php" class="nav-link" id="desktop-smtp" title="SMTP">
+                        <i class="fas fa-server"></i> <span>SMTP</span>
                     </a>
-                    <a href="campaigns.php" class="nav-link" id="desktop-campaigns">
-                        <i class="fas fa-bullhorn"></i> Campaigns
+                    <a href="campaigns.php" class="nav-link" id="desktop-campaigns" title="Campaigns">
+                        <i class="fas fa-bullhorn"></i> <span>Campaigns</span>
                     </a>
-                    <a href="campaign_monitor.php" class="nav-link" id="desktop-campaigns_monitor">
-                        <i class="fas fa-chart-line"></i> Campaigns Monitor
+                    <a href="campaigns_master.php" class="nav-link" id="desktop-campaigns_master" title="Master">
+                        <i class="fas fa-crown"></i> <span>Master</span>
+                    </a>
+                    <a href="campaign_monitor.php" class="nav-link" id="desktop-campaigns_monitor" title="Monitor">
+                        <i class="fas fa-chart-line"></i> <span>Monitor</span>
                     </a>
                 </div>
 
@@ -189,14 +247,14 @@
             <a href="index.php" class="mobile-nav-link" id="mobile-verification">
                 <i class="fas fa-check-circle"></i> Verification
             </a>
-            <!-- <a href="send_form.php" class="mobile-nav-link" id="mobile-send">
-                <i class="fas fa-paper-plane"></i> Send Emails
-            </a> -->
             <a href="smtp_records.php" class="mobile-nav-link" id="mobile-smtp">
                 <i class="fas fa-server"></i> SMTP Servers
             </a>
             <a href="campaigns.php" class="mobile-nav-link" id="mobile-campaigns">
                 <i class="fas fa-bullhorn"></i> Campaigns
+            </a>
+            <a href="campaigns_master.php" class="mobile-nav-link" id="mobile-campaigns_master">
+                <i class="fas fa-crown"></i> Campaigns Master
             </a>
             <a href="campaign_monitor.php" class="mobile-nav-link" id="mobile-campaigns_monitor">
                 <i class="fas fa-chart-line"></i> Campaigns Monitor
@@ -233,6 +291,10 @@
                     document.getElementById('desktop-campaigns').classList.add('active');
                     document.getElementById('mobile-campaigns').classList.add('active');
                     break;
+                case 'campaigns_master.php':
+                    document.getElementById('desktop-campaigns_master').classList.add('active');
+                    document.getElementById('mobile-campaigns_master').classList.add('active');
+                    break;
                 case 'campaign_monitor.php':
                     document.getElementById('desktop-campaigns_monitor').classList.add('active');
                     document.getElementById('mobile-campaigns_monitor').classList.add('active');
@@ -252,6 +314,10 @@
 
         menuButton.addEventListener('click', () => {
             mobileMenu.classList.toggle('active');
+
+            // Toggle aria-expanded attribute
+            const isExpanded = mobileMenu.classList.contains('active');
+            menuButton.setAttribute('aria-expanded', isExpanded);
         });
 
         // Close mobile menu when clicking on a link
@@ -259,11 +325,74 @@
         mobileLinks.forEach(link => {
             link.addEventListener('click', () => {
                 mobileMenu.classList.remove('active');
+                menuButton.setAttribute('aria-expanded', 'false');
             });
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-inner') && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                menuButton.setAttribute('aria-expanded', 'false');
+            }
         });
 
         // Set active nav item when page loads
         document.addEventListener('DOMContentLoaded', setActiveNavItem);
+
+        // Make desktop nav scrollable on touch devices
+        const desktopNav = document.querySelector('.desktop-nav');
+        if (desktopNav) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            desktopNav.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - desktopNav.offsetLeft;
+                scrollLeft = desktopNav.scrollLeft;
+                desktopNav.style.cursor = 'grabbing';
+                desktopNav.style.userSelect = 'none';
+            });
+
+            desktopNav.addEventListener('mouseleave', () => {
+                isDown = false;
+                desktopNav.style.cursor = 'grab';
+            });
+
+            desktopNav.addEventListener('mouseup', () => {
+                isDown = false;
+                desktopNav.style.cursor = 'grab';
+                desktopNav.style.removeProperty('user-select');
+            });
+
+            desktopNav.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - desktopNav.offsetLeft;
+                const walk = (x - startX) * 2;
+                desktopNav.scrollLeft = scrollLeft - walk;
+            });
+
+            // Touch events for mobile devices
+            desktopNav.addEventListener('touchstart', (e) => {
+                isDown = true;
+                startX = e.touches[0].pageX - desktopNav.offsetLeft;
+                scrollLeft = desktopNav.scrollLeft;
+            });
+
+            desktopNav.addEventListener('touchend', () => {
+                isDown = false;
+            });
+
+            desktopNav.addEventListener('touchmove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.touches[0].pageX - desktopNav.offsetLeft;
+                const walk = (x - startX) * 2;
+                desktopNav.scrollLeft = scrollLeft - walk;
+            });
+        }
     </script>
 </body>
 
