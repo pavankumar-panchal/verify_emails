@@ -436,3 +436,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("nextPage").click();
   }, 100); // Ensures the button is fully loaded before clicking
 });
+
+
+

@@ -30,7 +30,7 @@ function logVerification($message, $email = '', $domain = '')
     echo $logMessage;
 }
 
-// SMTP verification function
+// Updated function using stream_socket_client()
 function verifyEmailViaSMTP($email, $domain)
 {
     logVerification("Starting verification", $email, $domain);
@@ -144,7 +144,7 @@ function createWorkerScript()
     
     workerLog("Starting worker process with offset: $offset, limit: $limit");
     
-    $emails = $conn->query("SELECT id, raw_emailid, sp_domain FROM emails WHERE domain_processed=0 LIMIT $offset, $limit");
+    $emails = $conn->query("SELECT id, raw_emailid, sp_domain FROM emails WHERE domain_status=1 AND domain_processed=0 LIMIT $offset, $limit");
     
     while ($row = $emails->fetch_assoc()) {
         $email = $row[\'raw_emailid\'];
@@ -165,6 +165,7 @@ function createWorkerScript()
         workerLog("Result: " . ($status ? "Valid" : "Invalid") . " - $message", $email, $domain);
         
         $conn->query("UPDATE emails SET 
+                     domain_status = $status,
                      validation_response = \'$message\',
                      domain_processed = 1
                      WHERE id = {$row[\'id\']}");
@@ -257,7 +258,7 @@ function createWorkerScript()
     file_put_contents(WORKER_SCRIPT, $workerCode);
 }
 
-// Parallel processing function
+// Parallel processing function with domain processing tracking
 function processEmailsInParallel()
 {
     global $conn;
@@ -267,11 +268,11 @@ function processEmailsInParallel()
     }
 
     // Count only unprocessed emails
-    $total = $conn->query("SELECT COUNT(*) FROM emails WHERE domain_processed = 0")->fetch_row()[0];
+    $total = $conn->query("SELECT COUNT(*) FROM emails WHERE domain_status = 1 AND domain_processed = 0")->fetch_row()[0];
     echo " Total emails to process: $total\n";
 
     if ($total == 0) {
-        echo " All emails have already been processed.\n";
+        echo " All domains have already been processed.\n";
         return;
     }
 
@@ -299,7 +300,7 @@ function resetProcessedStatus()
 {
     global $conn;
     $conn->query("UPDATE emails SET domain_processed = 0");
-    echo "Reset processing status for all emails.\n";
+    echo "Reset processing status for all domains.\n";
 }
 
 // Main execution
@@ -311,8 +312,8 @@ try {
     // Uncomment the next line if you need to reset processing status
     // resetProcessedStatus();
 
-    processEmailsInParallel();
 
+    processEmailsInParallel();
     logVerification("Processing complete");
 
     echo "\nProcessing complete!\n";
@@ -324,55 +325,4 @@ try {
 } finally {
     $conn->close();
 }
-
-require "./db.php";
-
-// Fetch all campaigns where id matches campaign_list_id in emails
-$result = $conn->query("
-    SELECT DISTINCT c.id
-    FROM campaign_list c
-    JOIN emails e ON c.id = e.campaign_list_id
-");
-
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $campaignId = $row['id'];
-
-        // Count the valid and invalid emails for this campaign
-        $stmt = $conn->prepare("
-            SELECT 
-                COUNT(*) AS total_emails,
-                SUM(domain_status = 1) AS valid_count,
-                SUM(domain_status = 0) AS invalid_count
-            FROM emails
-            WHERE campaign_list_id = ?
-        ");
-        $stmt->bind_param("i", $campaignId);
-        $stmt->execute();
-        $stmt->bind_result($total, $valid, $invalid);
-        $stmt->fetch();
-        $stmt->close();
-
-        // Default to zero if NULL (in case no valid/invalid emails)
-        $valid = $valid ?? 0;
-        $invalid = $invalid ?? 0;
-        $total = $total ?? 0;
-
-        // Update the campaign_list table with the new counts
-        $updateStmt = $conn->prepare("
-            UPDATE campaign_list 
-            SET total_emails = ?, valid_count = ?, invalid_count = ?
-            WHERE id = ?
-        ");
-        $updateStmt->bind_param("iiii", $total, $valid, $invalid, $campaignId);
-        $updateStmt->execute();
-        $updateStmt->close();
-    }
-
-    echo "✅ All matching campaign_list records updated based on email data.";
-} else {
-    echo "⚠️ No matching campaigns found to update.";
-}
-
-
 ?>

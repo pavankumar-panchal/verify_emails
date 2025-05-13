@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="assets/main.css">
 
     <link rel="stylesheet" href="assets/style_tailwind.css">
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    <script src="assets/ajax.js"></script>
 
     <style>
         .custom-file-input {
@@ -116,7 +118,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen px-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4">
     <?php
     include 'navbar.php';
     ?>
@@ -160,8 +162,6 @@
                         <span id="uploadText">Upload & Process</span>
                         <div id="uploadSpinner" class="loader ml-2 hidden"></div>
                     </button>
-
-
                 </div>
             </form>
 
@@ -201,7 +201,7 @@
         </div>
 
         <!-- Table Section -->
-        <div class="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -421,54 +421,6 @@
                 });
         }
 
-
-        // Handle form submit
-        csvForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData(csvForm);
-            const uploadBtn = document.getElementById('uploadBtn');
-            const uploadText = document.getElementById('uploadText');
-            const uploadSpinner = document.getElementById('uploadSpinner');
-
-            // Show loading state on button
-            uploadText.textContent = "Uploading...";
-            uploadSpinner.classList.remove('hidden');
-            uploadBtn.disabled = true;
-
-            // Clear any existing interval
-            if (progressInterval) {
-                clearInterval(progressInterval);
-            }
-
-            fetch('email_processor.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error('Upload failed');
-                    return response.json();
-                })
-                .then(result => {
-                    if (result.status === 'success') {
-                        showStatusMessage(result.message || "File uploaded successfully!", "success");
-                        showProgressOverlay();
-                        updateProgress(0, 1); // Initialize progress
-                        progressInterval = setInterval(fetchProgress, 2000); // Check every 2 seconds
-                    } else {
-                        throw new Error(result.message || "Error processing file");
-                    }
-                })
-                .catch(error => {
-                    console.error('Upload error:', error);
-                    showStatusMessage(error.message || "File upload failed", "error");
-                })
-                .finally(() => {
-                    uploadText.textContent = "Upload & Process";
-                    uploadSpinner.classList.add('hidden');
-                    uploadBtn.disabled = false;
-                });
-        });
-
         // Check for existing progress on page load
         document.addEventListener('DOMContentLoaded', () => {
             hideProgressOverlay();
@@ -500,11 +452,6 @@
                 clearInterval(progressInterval);
             }
         });
-
-
-
-
-
 
     </script>
 
