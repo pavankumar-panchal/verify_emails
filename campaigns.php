@@ -173,55 +173,70 @@ $conn->close();
         </div>
 
         <!-- Campaigns Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden  max-h-screen overflow-y-auto">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full compact-table divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             <th
-                                class="w-16 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Description</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Subject</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email Preview</th>
+                                class="w-16 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Subject
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Email Preview
+                            </th>
                             <th
-                                class="w-32 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions</th>
+                                class="w-40 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php foreach ($campaigns as $campaign): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-500">
                                     <?= $campaign['campaign_id'] ?>
                                 </td>
-                                <td class="px-3 py-4">
-                                    <div class="text-sm font-medium text-gray-900">
+                                <td class="px-4 py-3">
+                                    <div class="text-sm font-medium text-gray-900 truncate max-w-xs">
                                         <?= htmlspecialchars($campaign['description']) ?>
                                     </div>
                                 </td>
-                                <td class="px-3 py-4">
-                                    <div class="text-sm text-gray-900"><?= htmlspecialchars($campaign['mail_subject']) ?>
+                                <td class="px-4 py-3">
+                                    <div class="text-sm text-gray-900 truncate max-w-xs">
+                                        <?= htmlspecialchars($campaign['mail_subject']) ?>
                                     </div>
                                 </td>
-                                <td class="px-3 py-4">
-                                    <div class="text-sm email-body-preview"
+                                <td class="px-4 py-3">
+                                    <div class="text-sm text-gray-500 truncate max-w-xs"
                                         title="<?= htmlspecialchars(strip_tags($campaign['mail_body_preview'])) ?>">
                                         <?= htmlspecialchars(strip_tags($campaign['mail_body_preview'])) ?>
                                     </div>
                                 </td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium action-links">
-                                    <a href="?edit=<?= $campaign['campaign_id'] ?>#editCampaignModal"
-                                        class="text-blue-600 hover:text-blue-900 mr-3">
-                                        <i class="fas fa-edit mr-1"></i> Edit
-                                    </a>
-                                    <a href="#" onclick="confirmDelete(<?= $campaign['campaign_id'] ?>)"
-                                        class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash mr-1"></i>
-                                    </a>
+                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        <a href="?edit=<?= $campaign['campaign_id'] ?>#editCampaignModal"
+                                            class="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                                            title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" onclick="reuseCampaign(<?= $campaign['campaign_id'] ?>)"
+                                            class="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                                            title="Reuse">
+                                            <i class="fas fa-copy"></i>
+                                        </a>
+                                        <a href="#" onclick="confirmDelete(<?= $campaign['campaign_id'] ?>)"
+                                            class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                                            title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -236,7 +251,6 @@ $conn->close();
                 </table>
             </div>
         </div>
-
         <!-- Add Campaign Modal -->
         <div id="addCampaignModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
             <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
@@ -363,6 +377,33 @@ $conn->close();
                 if (alert) alert.remove();
             }, 5000);
         <?php endif; ?>
+
+
+        // Reuse campaign function
+        function reuseCampaign(id) {
+            // Fetch campaign data via AJAX
+            fetch('get_campaign.php?id=' + id)
+                .then(response => response.json())
+                .then(data => {
+                    // Fill the add campaign form with the fetched data
+                    document.querySelector('#addCampaignModal input[name="description"]').value =
+                        data.description;
+                    document.querySelector('#addCampaignModal input[name="mail_subject"]').value =
+                        data.mail_subject;
+                    document.querySelector('#addCampaignModal textarea[name="mail_body"]').value =
+                        data.mail_body;
+
+                    // Show the add campaign modal
+                    document.getElementById('addCampaignModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading campaign data');
+                });
+        }
+
+
+
     </script>
 </body>
 
