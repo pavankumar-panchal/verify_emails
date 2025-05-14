@@ -136,7 +136,7 @@
     </div>
 
 
-    <div class="mt-4 w-full max-w-6xl">
+    <div class="mt-4 w-full max-w-7xl">
         <!-- <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
             <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
         </h2> -->
@@ -534,17 +534,17 @@
 
     </script>
 
-<script>
-    document.getElementById('csv_file').addEventListener('change', function () {
-        const fileInput = this;
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
-        if (fileInput.files.length > 0) {
-            fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
-        } else {
-            fileNameDisplay.textContent = '';
-        }
-    });
-</script>
+    <script>
+        document.getElementById('csv_file').addEventListener('change', function () {
+            const fileInput = this;
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+    </script>
 
 
     <script src="./assets/script.js"></script>

@@ -254,10 +254,10 @@
                 <i class="fas fa-bullhorn"></i> Campaigns
             </a>
             <a href="campaigns_master.php" class="mobile-nav-link" id="mobile-campaigns_master">
-                <i class="fas fa-crown"></i> Campaigns Master
+                <i class="fas fa-crown"></i> Master
             </a>
             <a href="campaign_monitor.php" class="mobile-nav-link" id="mobile-campaigns_monitor">
-                <i class="fas fa-chart-line"></i> Campaigns Monitor
+                <i class="fas fa-chart-line"></i> Monitor
             </a>
         </div>
     </nav>

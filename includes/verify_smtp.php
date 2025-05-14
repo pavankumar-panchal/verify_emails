@@ -159,7 +159,7 @@ function createWorkerScript()
             $message = $conn->real_escape_string($verification[\'message\']);
         } else {
             $status = 0;
-            $message = "Verification failed: " . $conn->real_escape_string($verification[\'message\']);
+            $message = "Invalid response";
         }
         
         workerLog("Result: " . ($status ? "Valid" : "Invalid") . " - $message", $email, $domain);

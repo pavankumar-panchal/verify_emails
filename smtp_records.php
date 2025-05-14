@@ -243,7 +243,7 @@ $conn->close();
 
 
   <!-- Main Content -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 mt-4">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 ">
     <!-- Status Message -->
     <?php if ($message): ?>
       <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">

@@ -143,7 +143,7 @@ $conn->close();
 
     <?php include 'navbar.php'; ?>
 
-    <div class="container mx-auto px-4 py-8 mt-8 max-w-6xl ">
+    <div class="container mx-auto px-4 py-8  max-w-7xl ">
 
         <!-- Status Message -->
         <?php if ($message): ?>

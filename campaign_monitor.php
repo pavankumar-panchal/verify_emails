@@ -421,7 +421,7 @@ $conn->close();
 <body class="bg-gray-100">
     <?php include 'navbar.php'; ?>
 
-    <div class="container mx-auto px-4 py-8 mt-8 max-w-6xl">
+    <div class="container mx-auto px-4 py-8  max-w-7xl">
         <!-- Status Message -->
         <?php if ($message): ?>
             <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start">
@@ -438,15 +438,15 @@ $conn->close();
             </div>
         <?php endif; ?>
 
-        <div class="flex justify-between items-center mb-6">
+        <!-- <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
                 <i class="fas fa-chart-line mr-2 text-blue-600"></i>
                 Campaign Monitor
             </h1>
-        </div>
+        </div> -->
 
         <!-- Campaigns Overview -->
-        <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
