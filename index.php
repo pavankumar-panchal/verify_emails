@@ -111,7 +111,6 @@
             display: none !important;
         }
 
-        /* Adjust main content to account for fixed navbar */
         .main-content {
             margin-top: 80px;
         }
@@ -142,32 +141,112 @@
             <i class="fas fa-envelope-open-text mr-2"></i>Split Emails & Verify Domains
         </h2> -->
         <!-- File Upload Section -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div class="bg-white p-8 rounded-xl shadow-lg mb-6 border border-gray-100">
+            <form id="csvForm" class="w-full" enctype="multipart/form-data">
+                <div class="space-y-6">
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            Upload Email List
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Upload your CSV file to verify email addresses</p>
+                    </div>
 
+                    <!-- Form Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- List Name Field -->
+                        <div class="space-y-1">
+                            <label for="list_name" class="block text-sm font-medium text-gray-700 flex items-center">
+                                <svg class="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                List Name
+                            </label>
+                            <input type="text" id="list_name" name="list_name" required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                placeholder="e.g. csv_list_2025">
+                        </div>
 
-            <form id="csvForm" class="flex flex-col items-center w-full" enctype="multipart/form-data">
-                <div class="w-full max-w-md mb-4">
-                    <label for="csv_file" class="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
-                    <input type="file" id="csv_file" name="csv_file" required accept=".csv"
-                        class="custom-file-input block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                    <p class="mt-1 text-xs text-gray-500"></p>
-                </div>
+                        <!-- File Name Field -->
+                        <div class="space-y-1">
+                            <label for="file_name" class="block text-sm font-medium text-gray-700 flex items-center">
+                                <svg class="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                File Name
+                            </label>
+                            <input type="text" id="file_name" name="file_name" required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                placeholder="e.g. csv_file_2025">
+                        </div>
+                    </div>
 
-                <!-- Buttons in a row -->
-                <div class="flex space-x-4 mb-3">
-                    <!-- Upload & Process Button -->
-                    <button type="submit" id="uploadBtn"
-                        onclick="triggerDomainVerification(),fetchProgress(),checkVerificationConfirmation()"
-                        class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition flex items-center justify-center min-w-[150px]">
-                        <span id="uploadText">Upload & Process</span>
-                        <div id="uploadSpinner" class="loader ml-2 hidden"></div>
-                    </button>
+                    <!-- File Upload -->
+                    <div class="space-y-1">
+                        <label for="csv_file" class="block text-sm font-medium text-gray-700 flex items-center">
+                            <svg class="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            CSV File
+                        </label>
+                        <div
+                            class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition">
+                            <div class="text-center text-sm">
+                                <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                <label for="csv_file"
+                                    class="cursor-pointer text-blue-600 hover:text-blue-500 font-medium">
+                                    Upload a file
+                                    <input id="csv_file" name="csv_file" type="file" class="sr-only" required
+                                        accept=".csv">
+                                </label>
+                                <p class="text-xs text-gray-500">or drag and drop.</p>
+                                <p id="fileNameDisplay" class="mt-2 text-sm text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-center pt-4">
+                        <button type="submit" id="uploadBtn"
+                            class="inline-flex items-center justify-center px-5 py-2.5 text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-md shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+                            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                            </svg>
+                            <span id="uploadText">Upload & Process</span>
+                            <div id="uploadSpinner" class="hidden ml-2">
+                                <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </form>
 
-
-            <div id="statusMessage" class="hidden mt-4 text-center p-3 rounded-md"></div>
+            <!-- Status Message -->
+            <div id="statusMessage" class="hidden mt-6 p-4 rounded-lg text-center"></div>
         </div>
+
 
         <div class="bg-white p-4 rounded-lg shadow-md mb-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -292,51 +371,51 @@
 
 
 
-        function processCSVAndVerify() {
-            const formData = new FormData();
-            const fileInput = document.querySelector('#csvFile'); // make sure this is your CSV input ID
-            formData.append("file", fileInput.files[0]);
+        // function processCSVAndVerify() {
+        //     const formData = new FormData();
+        //     const fileInput = document.querySelector('#csvFile'); // make sure this is your CSV input ID
+        //     formData.append("file", fileInput.files[0]);
 
-            // Step 1: Upload CSV and save emails
-            fetch("email_processor.php", {
-                method: "POST",
-                body: formData
-            })
-                .then(response => response.text())
-                .then(saveResponse => {
-                    console.log("CSV Save Response:", saveResponse);
+        //     // Step 1: Upload CSV and save emails
+        //     fetch("email_processor.php", {
+        //         method: "POST",
+        //         body: formData
+        //     })
+        //         .then(response => response.text())
+        //         .then(saveResponse => {
+        //             console.log("CSV Save Response:", saveResponse);
 
-                    // Step 2: Only after CSV is saved, verify domains
-                    return fetch("includes/verify_domain.php");
-                })
-                .then(response => response.text())
-                .then(verifyResponse => {
-                    alert("Verification completed: " + verifyResponse);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("Something went wrong!");
-                });
-        }
+        //             // Step 2: Only after CSV is saved, verify domains
+        //             return fetch("includes/verify_domain.php");
+        //         })
+        //         .then(response => response.text())
+        //         .then(verifyResponse => {
+        //             alert("Verification completed: " + verifyResponse);
+        //         })
+        //         .catch(error => {
+        //             console.error("Error:", error);
+        //             alert("Something went wrong!");
+        //         });
+        // }
 
-        function triggerDomainVerification() {
-            fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showStatusMessage("Verification process started!", "success");
-                        setTimeout(() => {
-                            fetchProgress();  // Start checking progress after 5 seconds
-                        }, 10000);
-                    } else {
-                        showStatusMessage("Error starting verification process.", "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error triggering domain verification:", error);
-                    showStatusMessage("Error triggering domain verification.", "error");
-                });
-        }
+        // function triggerDomainVerification() {
+        //     fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.status === 'success') {
+        //                 showStatusMessage("Verification process started!", "success");
+        //                 setTimeout(() => {
+        //                     fetchProgress();  // Start checking progress after 5 seconds
+        //                 }, 10000);
+        //             } else {
+        //                 showStatusMessage("Error starting verification process.", "error");
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error("Error triggering domain verification:", error);
+        //             showStatusMessage("Error triggering domain verification.", "error");
+        //         });
+        // }
 
         // Progress Tracking
 
@@ -454,6 +533,19 @@
         });
 
     </script>
+
+<script>
+    document.getElementById('csv_file').addEventListener('change', function () {
+        const fileInput = this;
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+        } else {
+            fileNameDisplay.textContent = '';
+        }
+    });
+</script>
+
 
     <script src="./assets/script.js"></script>
 

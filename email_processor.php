@@ -145,11 +145,14 @@ function handlePostRequest()
     $invalid_account_count = 0;
     $uniqueEmails = [];
 
-    $listName = $_POST['list_name'] ?? 'List';
-    $fileName = $_FILES['csv_file']['name'];
+    $listName = $_POST['list_name'];
+    
+    // $fileName = $_FILES['csv_file']['name'];
+    $fileName = $_POST['file_name'];
 
-    // Always insert a new campaign_list row
-    $insertListStmt = $conn->prepare("INSERT INTO campaign_list (list_name, file_name) VALUES (?, ?)");
+
+    // Always insert a new csv_list row
+    $insertListStmt = $conn->prepare("INSERT INTO csv_list (list_name, file_name) VALUES (?, ?)");
     $insertListStmt->bind_param("ss", $listName, $fileName);
     $insertListStmt->execute();
     $campaignListId = $conn->insert_id;
@@ -158,7 +161,7 @@ function handlePostRequest()
 
     // ✅ Prepare statements once
     $checkStmt = $conn->prepare("SELECT id FROM emails WHERE raw_emailid = ? LIMIT 1");
-    $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response, domain_processed, campaign_list_id) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
+    $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response, domain_processed, csv_list_id) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
 
     if (($handle = fopen($file, "r")) === false) {
         return ["status" => "error", "message" => "Failed to read CSV file"];
@@ -237,11 +240,11 @@ function handlePostRequest()
     $conn->commit();
     fclose($handle);
 
-    // ✅ Now calculate totals from emails table using campaign_list_id
+    // ✅ Now calculate totals from emails table using csv_list_id
     $totalQuery = $conn->prepare("SELECT COUNT(*) AS total, 
                                          SUM(CASE WHEN domain_status = 1 THEN 1 ELSE 0 END) AS valid, 
                                          SUM(CASE WHEN domain_status = 0 THEN 1 ELSE 0 END) AS invalid 
-                                  FROM emails WHERE campaign_list_id = ?");
+                                  FROM emails WHERE csv_list_id = ?");
     $totalQuery->bind_param("i", $campaignListId);
     $totalQuery->execute();
     $result = $totalQuery->get_result()->fetch_assoc();
@@ -258,7 +261,7 @@ function handlePostRequest()
         "excluded" => $excluded_count,
         "invalid_accounts" => $invalid_account_count,
         "skipped" => $skipped_count,
-        "campaign_list_id" => $campaignListId,
+        "csv_list_id" => $campaignListId,
         "total_emails" => $total,
         "valid" => $valid,
         "invalid" => $invalid
@@ -290,7 +293,7 @@ function handlePostRequest()
 //     $invalid_account_count = 0;
 //     $uniqueEmails = [];
 
-//     $query=$conn->prepare("INSERT INTO campaign_list where id=$ ");
+//     $query=$conn->prepare("INSERT INTO csv_list where id=$ ");
 
 //     $checkStmt = $conn->prepare("SELECT id FROM emails WHERE raw_emailid = ? LIMIT 1");
 //     $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response) VALUES (?, ?, ?, ?, ?, ?)");

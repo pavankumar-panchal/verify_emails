@@ -327,11 +327,11 @@ try {
 
 require "./db.php";
 
-// Fetch all campaigns where id matches campaign_list_id in emails
+// Fetch all campaigns where id matches csv_list_id in emails
 $result = $conn->query("
     SELECT DISTINCT c.id
-    FROM campaign_list c
-    JOIN emails e ON c.id = e.campaign_list_id
+    FROM csv_list c
+    JOIN emails e ON c.id = e.csv_list_id
 ");
 
 if ($result && $result->num_rows > 0) {
@@ -345,7 +345,7 @@ if ($result && $result->num_rows > 0) {
                 SUM(domain_status = 1) AS valid_count,
                 SUM(domain_status = 0) AS invalid_count
             FROM emails
-            WHERE campaign_list_id = ?
+            WHERE csv_list_id = ?
         ");
         $stmt->bind_param("i", $campaignId);
         $stmt->execute();
@@ -358,9 +358,9 @@ if ($result && $result->num_rows > 0) {
         $invalid = $invalid ?? 0;
         $total = $total ?? 0;
 
-        // Update the campaign_list table with the new counts
+        // Update the csv_list table with the new counts
         $updateStmt = $conn->prepare("
-            UPDATE campaign_list 
+            UPDATE csv_list 
             SET total_emails = ?, valid_count = ?, invalid_count = ?
             WHERE id = ?
         ");
@@ -369,7 +369,7 @@ if ($result && $result->num_rows > 0) {
         $updateStmt->close();
     }
 
-    echo "✅ All matching campaign_list records updated based on email data.";
+    echo "✅ All matching csv_list records updated based on email data.";
 } else {
     echo "⚠️ No matching campaigns found to update.";
 }
