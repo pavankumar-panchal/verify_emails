@@ -436,7 +436,7 @@ $conn->close();
 
         <!-- <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
-                <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                <i class="fas fa-chart-line mr-2 text-blue-600"></i>                
                 Campaign Monitor
             </h1>
         </div> -->
@@ -457,8 +457,6 @@ $conn->close();
                                 Progress</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Emails</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -498,29 +496,7 @@ $conn->close();
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
 
-                                    <form method="POST" class="inline">
-                                        <input type="hidden" name="campaign_id" value="<?= $campaign['campaign_id'] ?>">
 
-                                        <?php if (($campaign['campaign_status'] ?? '') === 'running'): ?>
-                                            <button type="submit" name="pause_campaign"
-                                                class="text-yellow-600 hover:text-yellow-900 mr-3">
-                                                <i class="fas fa-pause mr-1"></i> Pause
-                                            </button>
-                                        <?php elseif (($campaign['campaign_status'] ?? '') === 'completed'): ?>
-                                            <span class="text-gray-400 mr-3">Completed</span>
-                                        <?php else: ?>
-                                            <button type="submit" name="start_campaign"
-                                                class="text-green-600 hover:text-green-900 mr-3">
-                                                <i class="fas fa-play mr-1"></i> Start
-                                            </button>
-                                        <?php endif; ?>
-
-                                        <?php if (($campaign['failed_emails'] ?? 0) > 0 && ($campaign['campaign_status'] ?? '') !== 'completed'): ?>
-                                            <button type="submit" name="retry_failed" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-redo mr-1"></i> Retry Failed
-                                            </button>
-                                        <?php endif; ?>
-                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
