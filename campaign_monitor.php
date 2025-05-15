@@ -348,10 +348,6 @@ if (isset($_GET['view'])) {
 $conn->close();
 ?>
 
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 
