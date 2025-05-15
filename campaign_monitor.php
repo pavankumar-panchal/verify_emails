@@ -347,6 +347,9 @@ if (isset($_GET['view'])) {
 $conn->close();
 ?>
 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -492,10 +495,6 @@ $conn->close();
                                     <div>Pending: <?= $campaign['pending_emails'] ?: 0 ?></div>
                                     <div>Sent: <?= $campaign['sent_emails'] ?: 0 ?></div>
                                     <div>Failed: <?= $campaign['failed_emails'] ?: 0 ?></div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-
-
                                 </td>
                             </tr>
                         <?php endforeach; ?>

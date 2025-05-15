@@ -78,8 +78,24 @@ while (true) {
             break;
         }
 
+        $result = $db->query("SELECT COUNT(*) AS total FROM emails e 
+        LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
+        WHERE e.domain_status = 1
+        AND (mb.id IS NULL OR (mb.status IN ('failed', 'pending') AND mb.attempt_count < 3))
+        AND NOT EXISTS (
+            SELECT 1 FROM mail_blaster mb2 
+            WHERE mb2.to_mail = e.raw_emailid 
+            AND mb2.campaign_id = $campaign_id
+            AND mb2.status = 'success'
+        )
+    ");
+        $total_email_count = (int) $result->fetch_assoc()['total'];
+
+
+
+
         // Process emails
-        $processed_count = processEmailBatch($db, $campaign_id);
+        $processed_count = processEmailBatch($db, $campaign_id, $total_email_count);
 
         // Adjust sleep time based on processing results
         if ($processed_count > 0) {
@@ -109,12 +125,10 @@ function checkNetworkConnectivity()
     return false;
 }
 
-
-function processEmailBatch($db, $campaign_id)
+function processEmailBatch($db, $campaign_id, $total_email_count)
 {
     $processed_count = 0;
     $max_retries = 3;
-    $batch_size = 10; // Maximum batch size
 
     try {
         $db->query("SET SESSION innodb_lock_wait_timeout = 10");
@@ -133,7 +147,7 @@ function processEmailBatch($db, $campaign_id)
 
         // Get SMTP distribution for this campaign
         $distribution = $db->query("
-            SELECT smtp_id, percentage ,campaign_id
+            SELECT smtp_id, percentage 
             FROM campaign_distribution 
             WHERE campaign_id = $campaign_id
             ORDER BY percentage DESC
@@ -143,14 +157,13 @@ function processEmailBatch($db, $campaign_id)
             throw new Exception("No SMTP distribution configured for this campaign");
         }
 
-        // Calculate exact number of emails per SMTP based on percentage
-        $total_percentage = array_sum(array_column($distribution, 'percentage'));
+        // Calculate allocation per SMTP based on percentage of total emails
         $smtp_allocation = [];
         $allocated_total = 0;
+        $total_percentage = array_sum(array_column($distribution, 'percentage'));
 
-        // First pass - allocate whole numbers
         foreach ($distribution as $dist) {
-            $exact = ($dist['percentage'] / $total_percentage) * $batch_size;
+            $exact = ($dist['percentage'] / $total_percentage) * $total_email_count;
             $whole = floor($exact);
             $fraction = $exact - $whole;
 
@@ -162,24 +175,18 @@ function processEmailBatch($db, $campaign_id)
             $allocated_total += $whole;
         }
 
-        // Second pass - distribute remaining emails based on largest fractions
-        $remaining = $batch_size - $allocated_total;
+        // Distribute remaining emails
+        $remaining = $total_email_count - $allocated_total;
         if ($remaining > 0) {
-            // Sort by fraction descending
-            uasort($smtp_allocation, function ($a, $b) {
-                return $b['fraction'] <=> $a['fraction'];
-            });
-
-            // Distribute remaining emails
+            uasort($smtp_allocation, fn($a, $b) => $b['fraction'] <=> $a['fraction']);
             foreach ($smtp_allocation as $smtp_id => &$alloc) {
-                if ($remaining <= 0)
+                if ($remaining-- <= 0)
                     break;
                 $alloc['allocated']++;
-                $remaining--;
             }
         }
 
-        // Get available SMTP servers with their limits
+        // Get available SMTP servers with limits
         $available_servers = [];
         foreach ($smtp_allocation as $smtp_id => $alloc) {
             if ($alloc['allocated'] <= 0)
@@ -198,32 +205,30 @@ function processEmailBatch($db, $campaign_id)
             return 0;
         }
 
-        // Process emails for each available SMTP server
+        // Process emails
         foreach ($available_servers as $smtp_id => $server) {
             $emails_to_process = $server['allocated'];
             if ($emails_to_process <= 0)
                 continue;
 
-            // Get emails to process for this SMTP
             $emails = $db->query("
                 SELECT e.id, e.raw_emailid
                 FROM emails e
                 LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
                 WHERE e.domain_status = 1
-                AND (mb.id IS NULL OR (mb.status IN ('failed', 'pending') AND mb.attempt_count < $max_retries))
-                AND NOT EXISTS (
-                    SELECT 1 FROM mail_blaster mb2 
-                    WHERE mb2.to_mail = e.raw_emailid 
-                    AND mb2.campaign_id = $campaign_id
-                    AND mb2.status = 'success'
-                )
+                  AND (mb.id IS NULL OR (mb.status IN ('failed', 'pending') AND mb.attempt_count < $max_retries))
+                  AND NOT EXISTS (
+                      SELECT 1 FROM mail_blaster mb2 
+                      WHERE mb2.to_mail = e.raw_emailid 
+                      AND mb2.campaign_id = $campaign_id
+                      AND mb2.status = 'success'
+                  )
                 ORDER BY mb.attempt_count ASC, mb.id ASC
                 LIMIT $emails_to_process
             ")->fetch_all(MYSQLI_ASSOC);
 
             foreach ($emails as $email) {
                 try {
-                    // Check campaign status
                     $status = $db->query("
                         SELECT status FROM campaign_status 
                         WHERE campaign_id = $campaign_id
@@ -231,16 +236,13 @@ function processEmailBatch($db, $campaign_id)
 
                     if ($status !== 'running') {
                         logMessage("Campaign paused or stopped during processing");
-                        break 2; // Break both loops
+                        break 2;
                     }
 
-                    // Send email
                     sendEmail($server, $email['raw_emailid'], $campaign['mail_subject'], $campaign['mail_body']);
 
-                    // Record delivery
                     recordDelivery($db, $smtp_id, $email['id'], $campaign_id, $email['raw_emailid'], 'success');
 
-                    // Update campaign status
                     $db->query("
                         UPDATE campaign_status 
                         SET sent_emails = sent_emails + 1, 
@@ -249,7 +251,7 @@ function processEmailBatch($db, $campaign_id)
                     ");
 
                     $processed_count++;
-                    usleep(300000); // Throttle emails (0.3 seconds)
+                    usleep(300000); // 0.3 seconds throttle
 
                 } catch (Exception $e) {
                     recordDelivery($db, $smtp_id, $email['id'], $campaign_id, $email['raw_emailid'], 'failed', $e->getMessage());
@@ -275,7 +277,6 @@ function processEmailBatch($db, $campaign_id)
         return 0;
     }
 }
-
 
 
 
