@@ -3,7 +3,6 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
-
 require 'db.php';
 
 // Database configuration
@@ -28,9 +27,6 @@ register_shutdown_function(function () use ($pid_file) {
         unlink($pid_file);
     }
 });
-
-// Track SMTP usage windows
-// $smtp_windows = [];
 
 // Main processing loop
 while (true) {
@@ -103,7 +99,6 @@ while (true) {
     }
 }
 
-
 function checkNetworkConnectivity()
 {
     $connected = @fsockopen("8.8.8.8", 53, $errno, $errstr, 5);
@@ -114,10 +109,11 @@ function checkNetworkConnectivity()
     return false;
 }
 
-function processEmailBatch($db, $campaign_id, )
+function processEmailBatch($db, $campaign_id)
 {
     $processed_count = 0;
     $max_retries = 3;
+    $batch_size = 10;
 
     try {
         $db->query("SET SESSION innodb_lock_wait_timeout = 10");
@@ -134,88 +130,108 @@ function processEmailBatch($db, $campaign_id, )
             throw new Exception("Campaign not found");
         }
 
-        // Get SMTP server
-        $smtp = getNextSmtpServer($db);
-        if (!$smtp) {
+        // Get SMTP distribution for this campaign
+        $distribution = $db->query("
+            SELECT smtp_id, percentage 
+            FROM campaign_distribution 
+            WHERE campaign_id = $campaign_id
+            ORDER BY percentage DESC
+        ")->fetch_all(MYSQLI_ASSOC);
+
+        if (empty($distribution)) {
+            throw new Exception("No SMTP distribution configured for this campaign");
+        }
+
+        // Calculate how many emails to send from each SMTP based on percentage
+        $smtp_allocation = [];
+        $total_percentage = array_sum(array_column($distribution, 'percentage'));
+
+        foreach ($distribution as $dist) {
+            $allocated = max(1, floor(($dist['percentage'] / $total_percentage) * $batch_size));
+            $smtp_allocation[$dist['smtp_id']] = $allocated;
+        }
+
+        // Get available SMTP servers with their limits
+        $available_servers = [];
+        foreach ($smtp_allocation as $smtp_id => $allocated) {
+            $server = getSmtpServerWithLimits($db, $smtp_id);
+            if ($server && $server['can_send']) {
+                $server['allocated'] = min($allocated, $server['remaining_capacity']);
+                $available_servers[$smtp_id] = $server;
+            }
+        }
+
+        if (empty($available_servers)) {
             logMessage("No available SMTP servers within limits");
             $db->commit();
             return 0;
         }
 
-        // Get emails to process
-        $emails = $db->query("
-            SELECT e.id, e.raw_emailid
-            FROM emails e
-            LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
-            WHERE e.domain_status = 1
-            AND (mb.id IS NULL OR (mb.status IN ('failed', 'pending') AND mb.attempt_count < $max_retries))
-            AND NOT EXISTS (
-                SELECT 1 FROM mail_blaster mb2 
-                WHERE mb2.to_mail = e.raw_emailid 
-                AND mb2.campaign_id = $campaign_id
-                AND mb2.status = 'success'
-            )
-            ORDER BY mb.attempt_count ASC, mb.id ASC
-            LIMIT 10
-        ")->fetch_all(MYSQLI_ASSOC);
+        // Process emails for each available SMTP server
+        foreach ($available_servers as $smtp_id => $server) {
+            $emails_to_process = $server['allocated'];
+            if ($emails_to_process <= 0)
+                continue;
 
-        if (empty($emails)) {
-            $db->commit();
-            return 0;
-        }
+            // Get emails to process for this SMTP
+            $emails = $db->query("
+                SELECT e.id, e.raw_emailid
+                FROM emails e
+                LEFT JOIN mail_blaster mb ON mb.to_mail = e.raw_emailid AND mb.campaign_id = $campaign_id
+                WHERE e.domain_status = 1
+                AND (mb.id IS NULL OR (mb.status IN ('failed', 'pending') AND mb.attempt_count < $max_retries))
+                AND NOT EXISTS (
+                    SELECT 1 FROM mail_blaster mb2 
+                    WHERE mb2.to_mail = e.raw_emailid 
+                    AND mb2.campaign_id = $campaign_id
+                    AND mb2.status = 'success'
+                )
+                ORDER BY mb.attempt_count ASC, mb.id ASC
+                LIMIT $emails_to_process
+            ")->fetch_all(MYSQLI_ASSOC);
 
-        foreach ($emails as $email) {
-            try {
-                // Check campaign status
-                $status = $db->query("
-                    SELECT status FROM campaign_status 
-                    WHERE campaign_id = $campaign_id
-                ")->fetch_assoc()['status'];
+            foreach ($emails as $email) {
+                try {
+                    // Check campaign status
+                    $status = $db->query("
+                        SELECT status FROM campaign_status 
+                        WHERE campaign_id = $campaign_id
+                    ")->fetch_assoc()['status'];
 
-                if ($status !== 'running') {
-                    logMessage("Campaign paused or stopped during processing");
-                    break;
+                    if ($status !== 'running') {
+                        logMessage("Campaign paused or stopped during processing");
+                        break 2; // Break both loops
+                    }
+
+                    // Send email
+                    sendEmail($server, $email['raw_emailid'], $campaign['mail_subject'], $campaign['mail_body']);
+
+                    // Record delivery
+                    recordDelivery($db, $smtp_id, $email['id'], $campaign_id, $email['raw_emailid'], 'success');
+
+                    // Update campaign status
+                    $db->query("
+                        UPDATE campaign_status 
+                        SET sent_emails = sent_emails + 1, 
+                            pending_emails = GREATEST(0, pending_emails - 1) 
+                        WHERE campaign_id = $campaign_id
+                    ");
+
+                    $processed_count++;
+                    usleep(300000); // Throttle emails (0.3 seconds)
+
+                } catch (Exception $e) {
+                    recordDelivery($db, $smtp_id, $email['id'], $campaign_id, $email['raw_emailid'], 'failed', $e->getMessage());
+
+                    $db->query("
+                        UPDATE campaign_status 
+                        SET failed_emails = failed_emails + 1, 
+                            pending_emails = GREATEST(0, pending_emails - 1) 
+                        WHERE campaign_id = $campaign_id
+                    ");
+
+                    logMessage("Failed to send to {$email['raw_emailid']}: " . $e->getMessage(), 'ERROR');
                 }
-
-                // Check SMTP limits
-                if (!checkSendingLimits($db, $smtp['id'])) {
-                    logMessage("SMTP limits reached for server {$smtp['id']}");
-                    break;
-                }
-
-                // Send email
-                sendEmail($smtp, $email['raw_emailid'], $campaign['mail_subject'], $campaign['mail_body']);
-
-                // Record delivery
-                recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'success');
-
-                // Update campaign status
-                $db->query("
-                    UPDATE campaign_status 
-                    SET sent_emails = sent_emails + 1, 
-                        pending_emails = GREATEST(0, pending_emails - 1) 
-                    WHERE campaign_id = $campaign_id
-                ");
-
-                $processed_count++;
-                usleep(300000); // Throttle emails (0.3 seconds)
-
-            } catch (Exception $e) {
-                recordDelivery($db, $smtp['id'], $email['id'], $campaign_id, $email['raw_emailid'], 'failed', $e->getMessage());
-
-                $db->query("
-                    UPDATE campaign_status 
-                    SET failed_emails = failed_emails + 1, 
-                        pending_emails = GREATEST(0, pending_emails - 1) 
-                    WHERE campaign_id = $campaign_id
-                ");
-
-                logMessage("Failed to send to {$email['raw_emailid']}: " . $e->getMessage(), 'ERROR');
-
-                // // If SMTP failed, mark it as potentially problematic
-                // if (strpos($e->getMessage(), 'SMTP error') !== false) {
-                //     $smtp_windows[$smtp['id']]['last_error'] = time();
-                // }
             }
         }
 
@@ -229,91 +245,51 @@ function processEmailBatch($db, $campaign_id, )
     }
 }
 
-function getNextSmtpServer($db, )
+function getSmtpServerWithLimits($db, $smtp_id)
 {
-    $servers = $db->query("
-        SELECT * FROM smtp_servers 
-        WHERE is_active = 1
-        ORDER BY RAND()
-    ")->fetch_all(MYSQLI_ASSOC);
-
-    foreach ($servers as $server) {
-        // Check daily limit
-        $daily_sent = $db->query("
-            SELECT SUM(emails_sent) as total 
-            FROM smtp_usage 
-            WHERE smtp_id = {$server['id']} 
-            AND date = CURDATE()
-        ")->fetch_assoc()['total'] ?? 0;
-
-        if ($daily_sent >= $server['daily_limit']) {
-            logMessage("Daily limit reached for SMTP {$server['id']} ($daily_sent/{$server['daily_limit']})");
-            continue;
-        }
-
-        // Check hourly limit
-        $current_hour = date('G');
-        $hourly_sent = $db->query("
-            SELECT emails_sent as total 
-            FROM smtp_usage 
-            WHERE smtp_id = {$server['id']} 
-            AND date = CURDATE() 
-            AND hour = $current_hour
-        ")->fetch_assoc()['total'] ?? 0;
-
-        if ($hourly_sent < $server['hourly_limit']) {
-            return $server;
-        } else {
-            logMessage("Hourly limit reached for SMTP {$server['id']} ($hourly_sent/{$server['hourly_limit']})");
-        }
-    }
-
-    return null;
-}
-
-
-function checkSendingLimits($db, $smtpId)
-{
+    // Get SMTP server details
     $server = $db->query("
-        SELECT hourly_limit, daily_limit 
-        FROM smtp_servers 
-        WHERE id = $smtpId
+        SELECT s.*, 
+               COALESCE(SUM(u.emails_sent), 0) as daily_sent,
+               COALESCE((
+                   SELECT emails_sent 
+                   FROM smtp_usage 
+                   WHERE smtp_id = s.id 
+                   AND date = CURDATE() 
+                   AND hour = HOUR(NOW())
+                   LIMIT 1
+               ), 0) as hourly_sent
+        FROM smtp_servers s
+        LEFT JOIN smtp_usage u ON u.smtp_id = s.id AND u.date = CURDATE()
+        WHERE s.id = $smtp_id
+        GROUP BY s.id
     ")->fetch_assoc();
 
     if (!$server) {
-        return false;
+        return null;
     }
 
-    // Check daily limit
-    $daily_sent = $db->query("
-        SELECT SUM(emails_sent) as total 
-        FROM smtp_usage 
-        WHERE smtp_id = $smtpId 
-        AND date = CURDATE()
-    ")->fetch_assoc()['total'] ?? 0;
+    // Calculate remaining capacity
+    $daily_remaining = max(0, $server['daily_limit'] - $server['daily_sent']);
+    $hourly_remaining = max(0, $server['hourly_limit'] - $server['hourly_sent']);
+    $remaining_capacity = min($daily_remaining, $hourly_remaining);
 
-    if ($daily_sent >= $server['daily_limit']) {
-        logMessage("Daily limit reached for SMTP $smtpId ($daily_sent/{$server['daily_limit']})");
-        return false;
-    }
-
-    // Check hourly limit using the database (more reliable than in-memory tracking)
-    $current_hour = date('G');
-    $hourly_sent = $db->query("
-        SELECT emails_sent as total 
-        FROM smtp_usage 
-        WHERE smtp_id = $smtpId 
-        AND date = CURDATE() 
-        AND hour = $current_hour
-    ")->fetch_assoc()['total'] ?? 0;
-
-    if ($hourly_sent >= $server['hourly_limit']) {
-        logMessage("Hourly limit reached for SMTP $smtpId ($hourly_sent/{$server['hourly_limit']})");
-        return false;
-    }
-
-    return true;
+    return [
+        'id' => $server['id'],
+        'host' => $server['host'],
+        'port' => $server['port'],
+        'email' => $server['email'],
+        'password' => $server['password'],
+        'encryption' => $server['encryption'],
+        'daily_limit' => $server['daily_limit'],
+        'hourly_limit' => $server['hourly_limit'],
+        'daily_sent' => $server['daily_sent'],
+        'hourly_sent' => $server['hourly_sent'],
+        'remaining_capacity' => $remaining_capacity,
+        'can_send' => ($remaining_capacity > 0)
+    ];
 }
+
 function sendEmail($smtp, $to_email, $subject, $body)
 {
     $mail = new PHPMailer(true);
@@ -347,8 +323,6 @@ function sendEmail($smtp, $to_email, $subject, $body)
     }
 }
 
-
-
 function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status, $error = null)
 {
     // Mail blaster record
@@ -374,19 +348,6 @@ function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status,
             attempt_count = IF(mail_blaster.status = 'success', mail_blaster.attempt_count, mail_blaster.attempt_count + 1)
     ");
 
-    // Sending log
-    // $db->query("
-    //     INSERT INTO sending_logs 
-    //     (campaign_id, email_id, smtp_id, status, error_message)
-    //     VALUES (
-    //         $campaignId,
-    //         $emailId,
-    //         $smtpId,
-    //         '" . $db->real_escape_string($status) . "',
-    //         " . ($error ? "'" . $db->real_escape_string($error) . "'" : "NULL") . "
-    //     )
-    // ");
-
     // Update SMTP usage with exact timestamp (only for successful sends)
     if ($status === 'success') {
         $current_hour = date('G');
@@ -406,10 +367,6 @@ function recordDelivery($db, $smtpId, $emailId, $campaignId, $to_email, $status,
         ");
     }
 }
-
-
-
-
 
 function logMessage($message, $level = 'INFO')
 {

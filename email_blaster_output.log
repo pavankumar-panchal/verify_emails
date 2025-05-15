@@ -1,0 +1,35 @@
+
+Fatal error: Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/db.php:7
+Stack trace:
+#0 /opt/lampp/htdocs/email/db.php(7): mysqli->__construct('127.0.0.1', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 /opt/lampp/htdocs/email/email_blaster.php(6): require('/opt/lampp/htdo...')
+#2 {main}
+  thrown in /opt/lampp/htdocs/email/db.php on line 7
+
+Fatal error: Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/db.php:7
+Stack trace:
+#0 /opt/lampp/htdocs/email/db.php(7): mysqli->__construct('127.0.0.1', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 /opt/lampp/htdocs/email/email_blaster.php(6): require('/opt/lampp/htdo...')
+#2 {main}
+  thrown in /opt/lampp/htdocs/email/db.php on line 7
+
+Fatal error: Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/db.php:7
+Stack trace:
+#0 /opt/lampp/htdocs/email/db.php(7): mysqli->__construct('127.0.0.1', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 /opt/lampp/htdocs/email/email_blaster.php(6): require('/opt/lampp/htdo...')
+#2 {main}
+  thrown in /opt/lampp/htdocs/email/db.php on line 7
+
+Fatal error: Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/db.php:7
+Stack trace:
+#0 /opt/lampp/htdocs/email/db.php(7): mysqli->__construct('127.0.0.1', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 /opt/lampp/htdocs/email/email_blaster.php(6): require('/opt/lampp/htdo...')
+#2 {main}
+  thrown in /opt/lampp/htdocs/email/db.php on line 7
+
+Fatal error: Uncaught mysqli_sql_exception: Connection refused in /opt/lampp/htdocs/email/db.php:7
+Stack trace:
+#0 /opt/lampp/htdocs/email/db.php(7): mysqli->__construct('127.0.0.1', 'root', Object(SensitiveParameterValue), 'email_id')
+#1 /opt/lampp/htdocs/email/email_blaster.php(6): require('/opt/lampp/htdo...')
+#2 {main}
+  thrown in /opt/lampp/htdocs/email/db.php on line 7
