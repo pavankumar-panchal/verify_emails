@@ -436,7 +436,7 @@ $smtp_servers = getSMTPServers();
             transition: all 0.3s ease;
         }
         .campaign-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .smtp-progress {
@@ -507,58 +507,63 @@ $smtp_servers = getSMTPServers();
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
     <?php require "navbar.php"; ?>
     
     <div class="container mx-auto px-12 py-6 w-full max-w-7xl">
-        <?php if ($message): ?>
-            <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start border-l-4">
-                <div class="ml-3">
-                    <p class="text-sm font-medium">
-                        <?= htmlspecialchars($message) ?>
-                    </p>
-                </div>
-                <div class="ml-auto pl-3">
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+    <?php if ($message): ?>
+        <div class="alert-<?= $message_type ?> p-4 mb-6 rounded-md shadow-sm flex items-start border-l-4">
+            <div class="ml-3">
+                <p class="text-sm font-medium">
+                    <?= htmlspecialchars($message) ?>
+                </p>
             </div>
-        <?php endif; ?>
+            <div class="ml-auto pl-3">
+                <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    <?php endif; ?>
 
-        <div class="grid grid-cols-1 gap-6 max-w-6xl">
-            <?php foreach ($campaigns as $campaign): ?>
-                <div class="bg-white rounded-xl shadow-md overflow-hidden campaign-card">
-                    <div class="p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h2 class="text-xl font-semibold text-gray-800 mb-1">
-                                    <?php echo htmlspecialchars($campaign['description']); ?>
-                                </h2>
-                                <p class="text-sm text-gray-600 mb-2">
-                                    <?php echo htmlspecialchars($campaign['mail_subject']); ?>
-                                </p>
-                                <div class="flex items-center space-x-4">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
-                                        <i class="fas fa-envelope mr-1"></i>
-                                        <?php echo number_format($campaign['valid_emails']); ?> Emails
+    <div class="grid grid-cols-1 gap-6 max-w-6xl">
+        <?php foreach ($campaigns as $campaign): ?>
+            <div class="bg-white rounded-xl shadow-md overflow-hidden campaign-card">
+                <div class="p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-1">
+                                <?php echo htmlspecialchars($campaign['description']); ?>
+                            </h2>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <?php echo htmlspecialchars($campaign['mail_subject']); ?>
+                            </p>
+                            <div class="flex items-center space-x-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    <?php echo number_format($campaign['valid_emails']); ?> Emails
+                                </span>
+                                <?php if ($campaign['remaining_percentage'] > 0): ?>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <?php echo $campaign['remaining_percentage']; ?>% Remaining
                                     </span>
-                                    <?php if ($campaign['remaining_percentage'] > 0): ?>
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
-                                            <i class="fas fa-clock mr-1"></i>
-                                            <?php echo $campaign['remaining_percentage']; ?>% Remaining
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
-                                            <i class="fas fa-check-circle mr-1"></i>
-                                            Fully Allocated
-                                        </span>
-                                    <?php endif; ?>
-                                    <span class="status-badge status-<?= strtolower($campaign['campaign_status'] ?? 'pending') ?>">
-                                        <?= $campaign['campaign_status'] ?? 'Not started' ?>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Fully Allocated
                                     </span>
-                                </div>
+                                <?php endif; ?>
+                                <span class="status-badge status-<?= strtolower($campaign['campaign_status'] ?? 'pending') ?>">
+                                    <?= $campaign['campaign_status'] ?? 'Not started' ?>
+                                </span>
                             </div>
+                        </div>
+                        <div class="flex space-x-2 items-center">
+                            <button onclick="toggleCampaignDetails(<?php echo $campaign['campaign_id']; ?>)" 
+                                class="text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg">
+                                <i class="fas fa-chevron-down text-sm" id="toggle-icon-<?php echo $campaign['campaign_id']; ?>"></i>
+                            </button>
                             <form method="POST" class="flex space-x-2">
                                 <input type="hidden" name="campaign_id" value="<?php echo $campaign['campaign_id']; ?>">
                                 <button type="submit" name="auto_distribute" 
@@ -587,84 +592,79 @@ $smtp_servers = getSMTPServers();
                                 <?php endif; ?>
                             </form>
                         </div>
+                    </div>
 
-                        <div class="mt-6">
-
-                            <form method="POST">
-                                <input type="hidden" name="campaign_id" value="<?php echo $campaign['campaign_id']; ?>">
-                                
-                                <!-- <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
-                                    <i class="fas fa-server mr-2 text-blue-500"></i>
-                                    SMTP Distribution Plan
-                                </h3> -->
-                                
-                                <div id="distribution-container-<?php echo $campaign['campaign_id']; ?>" class="space-y-3 mb-4">
-                                    <?php foreach ($campaign['current_distributions'] as $index => $dist): ?>
-                                        <div class="distribution-row flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                                            <select name="distribution[<?php echo $index; ?>][smtp_id]" 
-                                                class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                                                <?php foreach ($smtp_servers as $server): ?>
-                                                    <option value="<?php echo $server['id']; ?>" 
-                                                        <?php echo $dist['smtp_id'] == $server['id'] ? 'selected' : ''; ?>
-                                                        data-daily-limit="<?php echo $server['daily_limit']; ?>"
-                                                        data-hourly-limit="<?php echo $server['hourly_limit']; ?>">
-                                                        <?php echo htmlspecialchars($server['name']); ?>
-                                                        (<?php echo number_format($server['daily_limit']); ?>/day)
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            
-                                            <div class="relative w-32">
-                                                <input type="number" name="distribution[<?php echo $index; ?>][percentage]" min="1"
-                                                    max="<?php echo $campaign['remaining_percentage'] + $dist['percentage']; ?>" step="0.1"
-                                                    value="<?php echo $dist['percentage']; ?>"
-                                                    class="text-sm border border-gray-300 rounded-lg px-3 py-2 pr-8 w-full focus:ring-blue-500 focus:border-blue-500"
-                                                    onchange="updateEmailCount(this, <?php echo $campaign['valid_emails']; ?>)">
-                                                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">%</span>
-                                            </div>
-                                            
-                                            <div class="flex items-center space-x-2">
-                                                <span class="email-count bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                    ~<?php echo number_format($dist['email_count']); ?> emails
-                                                </span>
-                                                <button type="button" class="remove-distribution text-red-500 hover:text-red-700">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
+                    <div id="campaign-details-<?php echo $campaign['campaign_id']; ?>" class="mt-6 hidden">
+                        <form method="POST">
+                            <input type="hidden" name="campaign_id" value="<?php echo $campaign['campaign_id']; ?>">
+                            
+                            <div id="distribution-container-<?php echo $campaign['campaign_id']; ?>" class="space-y-3 mb-4">
+                                <?php foreach ($campaign['current_distributions'] as $index => $dist): ?>
+                                    <div class="distribution-row flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                                        <select name="distribution[<?php echo $index; ?>][smtp_id]" 
+                                            class="flex-1 min-w-0 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <?php foreach ($smtp_servers as $server): ?>
+                                                <option value="<?php echo $server['id']; ?>" 
+                                                    <?php echo $dist['smtp_id'] == $server['id'] ? 'selected' : ''; ?>
+                                                    data-daily-limit="<?php echo $server['daily_limit']; ?>"
+                                                    data-hourly-limit="<?php echo $server['hourly_limit']; ?>">
+                                                    <?php echo htmlspecialchars($server['name']); ?>
+                                                    (<?php echo number_format($server['daily_limit']); ?>/day)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        
+                                        <div class="relative w-32">
+                                            <input type="number" name="distribution[<?php echo $index; ?>][percentage]" min="1"
+                                                max="<?php echo $campaign['remaining_percentage'] + $dist['percentage']; ?>" step="0.1"
+                                                value="<?php echo $dist['percentage']; ?>"
+                                                class="text-sm border border-gray-300 rounded-lg px-3 py-2 pr-8 w-full focus:ring-blue-500 focus:border-blue-500"
+                                                onchange="updateEmailCount(this, <?php echo $campaign['valid_emails']; ?>)">
+                                            <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">%</span>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                
-                                <div class="flex justify-between items-center">
-                                    <button type="button"
-                                        onclick="addDistribution(<?php echo $campaign['campaign_id']; ?>, <?php echo $campaign['remaining_percentage']; ?>, <?php echo $campaign['valid_emails']; ?>)"
-                                        class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                        <i class="fas fa-plus mr-1"></i> Add SMTP Server
-                                    </button>
-                                    
-                                    <div class="flex space-x-3">
-                                        <span class="text-sm text-gray-600">
-                                            <?php if ($campaign['remaining_percentage'] > 0): ?>
-                                                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                                                <?php echo $campaign['remaining_percentage']; ?>% remaining to allocate
-                                            <?php else: ?>
-                                                <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                                                Fully allocated
-                                            <?php endif; ?>
-                                        </span>
-                                        <button type="submit" name="distribute"
-                                            class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-                                            <i class="fas fa-save mr-1"></i> Save Distribution
-                                        </button>
+                                        
+                                        <div class="flex items-center space-x-2">
+                                            <span class="email-count bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                                ~<?php echo number_format($dist['email_count']); ?> emails
+                                            </span>
+                                            <button type="button" class="remove-distribution text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
                                     </div>
+                                <?php endforeach; ?>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <button type="button"
+                                    onclick="addDistribution(<?php echo $campaign['campaign_id']; ?>, <?php echo $campaign['remaining_percentage']; ?>, <?php echo $campaign['valid_emails']; ?>)"
+                                    class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-plus mr-1"></i> Add SMTP Server
+                                </button>
+                                
+                                <div class="flex space-x-3">
+                                    <span class="text-sm text-gray-600">
+                                        <?php if ($campaign['remaining_percentage'] > 0): ?>
+                                            <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                                            <?php echo $campaign['remaining_percentage']; ?>% remaining to allocate
+                                        <?php else: ?>
+                                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                            Fully allocated
+                                        <?php endif; ?>
+                                    </span>
+                                    <button type="submit" name="distribute"
+                                        class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                                        <i class="fas fa-save mr-1"></i> Save Distribution
+                                    </button>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        </div>
+            </div>
+        <?php endforeach; ?>
     </div>
+</div>
 
     <script>
         let distributionCounters = {};
@@ -839,6 +839,22 @@ $smtp_servers = getSMTPServers();
                 setTimeout(() => msg.remove(), 500); // Remove after fade-out
             }
         }, 3000);
+
+
+        function toggleCampaignDetails(campaignId) {
+    const detailsDiv = document.getElementById(`campaign-details-${campaignId}`);
+    const toggleIcon = document.getElementById(`toggle-icon-${campaignId}`);
+    
+    if (detailsDiv.classList.contains('hidden')) {
+        detailsDiv.classList.remove('hidden');
+        toggleIcon.classList.remove('fa-chevron-down');
+        toggleIcon.classList.add('fa-chevron-up');
+    } else {
+        detailsDiv.classList.add('hidden');
+        toggleIcon.classList.remove('fa-chevron-up');
+        toggleIcon.classList.add('fa-chevron-down');
+    }
+}
     </script>
 
     </body>

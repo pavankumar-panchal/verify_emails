@@ -109,11 +109,12 @@ function checkNetworkConnectivity()
     return false;
 }
 
+
 function processEmailBatch($db, $campaign_id)
 {
     $processed_count = 0;
     $max_retries = 3;
-    $batch_size = 10;
+    $batch_size = 10; // Maximum batch size
 
     try {
         $db->query("SET SESSION innodb_lock_wait_timeout = 10");
@@ -132,7 +133,7 @@ function processEmailBatch($db, $campaign_id)
 
         // Get SMTP distribution for this campaign
         $distribution = $db->query("
-            SELECT smtp_id, percentage 
+            SELECT smtp_id, percentage ,campaign_id
             FROM campaign_distribution 
             WHERE campaign_id = $campaign_id
             ORDER BY percentage DESC
@@ -142,21 +143,51 @@ function processEmailBatch($db, $campaign_id)
             throw new Exception("No SMTP distribution configured for this campaign");
         }
 
-        // Calculate how many emails to send from each SMTP based on percentage
-        $smtp_allocation = [];
+        // Calculate exact number of emails per SMTP based on percentage
         $total_percentage = array_sum(array_column($distribution, 'percentage'));
+        $smtp_allocation = [];
+        $allocated_total = 0;
 
+        // First pass - allocate whole numbers
         foreach ($distribution as $dist) {
-            $allocated = max(1, floor(($dist['percentage'] / $total_percentage) * $batch_size));
-            $smtp_allocation[$dist['smtp_id']] = $allocated;
+            $exact = ($dist['percentage'] / $total_percentage) * $batch_size;
+            $whole = floor($exact);
+            $fraction = $exact - $whole;
+
+            $smtp_allocation[$dist['smtp_id']] = [
+                'whole' => $whole,
+                'fraction' => $fraction,
+                'allocated' => $whole
+            ];
+            $allocated_total += $whole;
+        }
+
+        // Second pass - distribute remaining emails based on largest fractions
+        $remaining = $batch_size - $allocated_total;
+        if ($remaining > 0) {
+            // Sort by fraction descending
+            uasort($smtp_allocation, function ($a, $b) {
+                return $b['fraction'] <=> $a['fraction'];
+            });
+
+            // Distribute remaining emails
+            foreach ($smtp_allocation as $smtp_id => &$alloc) {
+                if ($remaining <= 0)
+                    break;
+                $alloc['allocated']++;
+                $remaining--;
+            }
         }
 
         // Get available SMTP servers with their limits
         $available_servers = [];
-        foreach ($smtp_allocation as $smtp_id => $allocated) {
+        foreach ($smtp_allocation as $smtp_id => $alloc) {
+            if ($alloc['allocated'] <= 0)
+                continue;
+
             $server = getSmtpServerWithLimits($db, $smtp_id);
             if ($server && $server['can_send']) {
-                $server['allocated'] = min($allocated, $server['remaining_capacity']);
+                $server['allocated'] = min($alloc['allocated'], $server['remaining_capacity']);
                 $available_servers[$smtp_id] = $server;
             }
         }
@@ -244,6 +275,10 @@ function processEmailBatch($db, $campaign_id)
         return 0;
     }
 }
+
+
+
+
 
 function getSmtpServerWithLimits($db, $smtp_id)
 {

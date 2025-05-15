@@ -169,7 +169,6 @@ function startEmailBlasterProcess($campaign_id)
     }
 }
 
-
 function pauseCampaign($conn, $campaign_id)
 {
     global $message, $message_type;
