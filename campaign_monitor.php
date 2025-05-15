@@ -535,127 +535,24 @@ $conn->close();
             </div>
         </div>
 
-        <!-- Campaign Details -->
-        <?php if ($campaign_details): ?>
-            <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-medium text-gray-900">
-                        Campaign #<?= $campaign_details['campaign_id'] ?>:
-                        <?= htmlspecialchars($campaign_details['description']) ?>
-                    </h2>
-                    <div class="flex items-center mt-2">
-                        <span
-                            class="status-badge status-<?= strtolower($campaign_details['campaign_status'] ?? 'pending') ?> mr-3">
-                            <?= $campaign_details['campaign_status'] ?? 'Not started' ?>
-                        </span>
-                        <span class="text-sm text-gray-500">
-                            <?php if ($campaign_details['start_time']): ?>
-                                Started: <?= date('M j, Y g:i a', strtotime($campaign_details['start_time'])) ?>
-                            <?php endif; ?>
-                            <?php if ($campaign_details['end_time']): ?>
-                                | Ended: <?= date('M j, Y g:i a', strtotime($campaign_details['end_time'])) ?>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-blue-50 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-blue-800">Total Emails</div>
-                        <div class="text-2xl font-bold text-blue-600"><?= $campaign_details['total_emails'] ?: 0 ?></div>
-                    </div>
-                    <div class="bg-yellow-50 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-yellow-800">Pending</div>
-                        <div class="text-2xl font-bold text-yellow-600"><?= $campaign_details['pending_emails'] ?: 0 ?>
-                        </div>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-green-800">Sent</div>
-                        <div class="text-2xl font-bold text-green-600"><?= $campaign_details['sent_emails'] ?: 0 ?></div>
-                    </div>
-                    <div class="bg-red-50 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-red-800">Failed</div>
-                        <div class="text-2xl font-bold text-red-600"><?= $campaign_details['failed_emails'] ?: 0 ?></div>
-                    </div>
-                </div>
-
-                <div class="px-6 py-4">
-                    <h3 class="text-md font-medium text-gray-900 mb-3">Recent Activity</h3>
-                    <div class="overflow-y-auto max-h-96">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Time</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Email</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        SMTP Server</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <?php foreach ($campaign_details['logs'] as $log): ?>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?= date('M j, H:i:s', strtotime($log['delivery_date'] . ' ' . $log['delivery_time'])) ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?= htmlspecialchars($log['raw_emailid']) ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?= htmlspecialchars($log['smtp_name'] ?? 'N/A') ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <span
-                                                class="<?= ($log['status'] ?? '') === 'success' ? 'log-success' : 'log-failed' ?>">
-                                                <?= ucfirst($log['status'] ?? 'unknown') ?>
-                                                <?php if (!empty($log['error_message'])): ?>
-                                                    <span
-                                                        class="text-xs text-gray-500 block"><?= htmlspecialchars(substr($log['error_message'], 0, 50)) ?>...</span>
-                                                <?php endif; ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                                <?php if (empty($campaign_details['logs'])): ?>
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            No activity recorded yet.
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-    </div>
-
-    <script>
-        // Auto-refresh campaign status every 10 seconds
-        setInterval(function () {
-            if (window.location.href.indexOf('view=') === -1) {
-                // Only refresh if we're not viewing a specific campaign
-                fetch(window.location.href)
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const newDoc = parser.parseFromString(html, 'text/html');
-                        const newTable = newDoc.querySelector('table');
-                        if (newTable) {
-                            document.querySelector('table').outerHTML = newTable.outerHTML;
-                        }
-                    });
-            }
-        }, 5000);
-    </script>
+        <script>
+            // Auto-refresh campaign status every 10 seconds
+            setInterval(function () {
+                if (window.location.href.indexOf('view=') === -1) {
+                    // Only refresh if we're not viewing a specific campaign
+                    fetch(window.location.href)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const newDoc = parser.parseFromString(html, 'text/html');
+                            const newTable = newDoc.querySelector('table');
+                            if (newTable) {
+                                document.querySelector('table').outerHTML = newTable.outerHTML;
+                            }
+                        });
+                }
+            }, 5000);
+        </script>
 
 </body>
 

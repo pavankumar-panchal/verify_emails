@@ -1,4 +1,6 @@
 <?php
+
+session_start();
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, DELETE");
@@ -21,6 +23,7 @@ if ($conn->connect_error) {
 
 // Get the request method
 $method = $_SERVER['REQUEST_METHOD'];
+
 
 try {
     switch ($method) {
@@ -51,13 +54,9 @@ try {
 }
 
 // Close connection and flush buffer
-$cmd = "nohup php -q includes/verify_domain.php > /dev/null 2>&1 & echo $!";
-$pid = shell_exec($cmd);
-
 $conn->close();
 ob_end_flush();
 exit;
-
 
 function getExcludedAccounts()
 {
@@ -107,8 +106,6 @@ function isValidAccountName($account)
     return true;
 }
 
-
-
 function normalizeGmail($email)
 {
     $parts = explode('@', strtolower(trim($email)));
@@ -123,6 +120,8 @@ function normalizeGmail($email)
 
     return $account . '@gmail.com';
 }
+
+
 function handlePostRequest()
 {
     global $conn;
@@ -146,8 +145,20 @@ function handlePostRequest()
     $invalid_account_count = 0;
     $uniqueEmails = [];
 
+    $listName = $_POST['list_name'] ?? 'List';
+    $fileName = $_FILES['csv_file']['name'];
+
+    // Always insert a new campaign_list row
+    $insertListStmt = $conn->prepare("INSERT INTO campaign_list (list_name, file_name) VALUES (?, ?)");
+    $insertListStmt->bind_param("ss", $listName, $fileName);
+    $insertListStmt->execute();
+    $campaignListId = $conn->insert_id;
+
+
+
+    // ✅ Prepare statements once
     $checkStmt = $conn->prepare("SELECT id FROM emails WHERE raw_emailid = ? LIMIT 1");
-    $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response) VALUES (?, ?, ?, ?, ?, ?)");
+    $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response, domain_processed, campaign_list_id) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
 
     if (($handle = fopen($file, "r")) === false) {
         return ["status" => "error", "message" => "Failed to read CSV file"];
@@ -159,9 +170,8 @@ function handlePostRequest()
         if (empty($data[0]))
             continue;
 
-        // Sanitize and clean email
         $email = strtolower(trim($data[0]));
-        $email = preg_replace('/[^\x20-\x7E]/', '', $email); // Remove non-printable characters
+        $email = preg_replace('/[^\x20-\x7E]/', '', $email);
 
         if (isset($uniqueEmails[$email])) {
             $skipped_count++;
@@ -175,14 +185,12 @@ function handlePostRequest()
             continue;
         }
 
-        $sp_account = $emailParts[0];
-        $sp_domain = $emailParts[1];
-
+        [$sp_account, $sp_domain] = $emailParts;
         $domain_verified = 0;
         $domain_status = 0;
         $validation_response = "Not Verified Yet";
 
-        // Check if already in database
+        // Check for duplicate
         $checkStmt->bind_param("s", $email);
         $checkStmt->execute();
         if ($checkStmt->get_result()->num_rows > 0) {
@@ -194,15 +202,15 @@ function handlePostRequest()
         if (!isValidAccountName($sp_account)) {
             $domain_verified = 1;
             $domain_status = 0;
-            $validation_response = "Invalid";
+            $validation_response = "Invalid response";
             $invalid_account_count++;
 
-            $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
+            $insertStmt->bind_param("ssssisi", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response, $campaignListId);
             $insertStmt->execute();
             continue;
         }
 
-        // Check for excluded
+        // Exclusion check
         if (in_array(strtolower($sp_account), $excludedAccounts)) {
             $domain_verified = 1;
             $domain_status = 1;
@@ -215,12 +223,12 @@ function handlePostRequest()
             $excluded_count++;
         }
 
-        // Insert valid or excluded email
-        $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
+        // Insert into emails
+        $insertStmt->bind_param("ssssisi", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response, $campaignListId);
         $insertStmt->execute();
         $inserted_count++;
 
-        if ($inserted_count % $batchSize === 0 || $excluded_count % $batchSize === 0 || $invalid_account_count % $batchSize === 0) {
+        if ($inserted_count % $batchSize === 0) {
             $conn->commit();
             $conn->begin_transaction();
         }
@@ -229,6 +237,18 @@ function handlePostRequest()
     $conn->commit();
     fclose($handle);
 
+    // ✅ Now calculate totals from emails table using campaign_list_id
+    $totalQuery = $conn->prepare("SELECT COUNT(*) AS total, 
+                                         SUM(CASE WHEN domain_status = 1 THEN 1 ELSE 0 END) AS valid, 
+                                         SUM(CASE WHEN domain_status = 0 THEN 1 ELSE 0 END) AS invalid 
+                                  FROM emails WHERE campaign_list_id = ?");
+    $totalQuery->bind_param("i", $campaignListId);
+    $totalQuery->execute();
+    $result = $totalQuery->get_result()->fetch_assoc();
+
+    $total = $result['total'] ?? 0;
+    $valid = $result['valid'] ?? 0;
+    $invalid = $result['invalid'] ?? 0;
 
 
     return [
@@ -237,42 +257,138 @@ function handlePostRequest()
         "inserted" => $inserted_count,
         "excluded" => $excluded_count,
         "invalid_accounts" => $invalid_account_count,
-        "skipped" => $skipped_count
+        "skipped" => $skipped_count,
+        "campaign_list_id" => $campaignListId,
+        "total_emails" => $total,
+        "valid" => $valid,
+        "invalid" => $invalid
     ];
 }
 
 
-
-// function startBackgroundDomainVerification()
+// function handlePostRequest()
 // {
-//     // Get the absolute path to the verify_domain.php script
-//     $scriptPath = realpath(__DIR__ . './includes/verify_domain.php');
+//     global $conn;
 
-//     if (!$scriptPath) {
-//         error_log("verify_domain.php not found.");
-//         return;
+
+//     if (!isset($_FILES['csv_file'])) {
+//         return ["status" => "error", "message" => "No file uploaded"];
 //     }
 
-//     // Build the background command using nohup and redirect all output to /dev/null
-//     $cmd = "nohup php -q " . escapeshellarg($scriptPath) . " > /dev/null 2>&1 & echo $!";
-
-//     $pid = null;
-
-//     // Try executing the command using shell_exec or exec
-//     if (function_exists('shell_exec')) {
-//         $pid = trim(shell_exec($cmd));
-//     } elseif (function_exists('exec')) {
-//         exec($cmd, $output, $return_var);
-//         $pid = isset($output[0]) ? trim($output[0]) : null;
+//     $file = $_FILES['csv_file']['tmp_name'];
+//     if (!file_exists($file)) {
+//         return ["status" => "error", "message" => "File upload failed"];
 //     }
 
-//     // Optional: Log the PID or error
-//     if ($pid) {
-//         error_log("Background process started with PID: $pid");
-//     } else {
-//         error_log("Failed to start background process for verify_domain.php");
+//     $excludedAccounts = getExcludedAccounts();
+//     $excludedDomains = getExcludedDomainsWithIPs();
+
+//     $batchSize = 100;
+//     $skipped_count = 0;
+//     $inserted_count = 0;
+//     $excluded_count = 0;
+//     $invalid_account_count = 0;
+//     $uniqueEmails = [];
+
+//     $query=$conn->prepare("INSERT INTO campaign_list where id=$ ");
+
+//     $checkStmt = $conn->prepare("SELECT id FROM emails WHERE raw_emailid = ? LIMIT 1");
+//     $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response) VALUES (?, ?, ?, ?, ?, ?)");
+
+//     if (($handle = fopen($file, "r")) === false) {
+//         return ["status" => "error", "message" => "Failed to read CSV file"];
 //     }
+
+//     $conn->begin_transaction();
+
+//     while (($data = fgetcsv($handle, 1000, ",")) !== false) {
+//         if (empty($data[0]))
+//             continue;
+
+//         // Sanitize and clean email
+//         $email = strtolower(trim($data[0]));
+//         $email = preg_replace('/[^\x20-\x7E]/', '', $email); // Remove non-printable characters
+
+//         if (isset($uniqueEmails[$email])) {
+//             $skipped_count++;
+//             continue;
+//         }
+//         $uniqueEmails[$email] = true;
+
+//         $emailParts = explode("@", $email);
+//         if (count($emailParts) != 2) {
+//             $skipped_count++;
+//             continue;
+//         }
+
+//         $sp_account = $emailParts[0];
+//         $sp_domain = $emailParts[1];
+
+//         $domain_verified = 0;
+//         $domain_status = 0;
+//         $validation_response = "Not Verified Yet";
+
+//         // Check if already in database
+//         $checkStmt->bind_param("s", $email);
+//         $checkStmt->execute();
+//         if ($checkStmt->get_result()->num_rows > 0) {
+//             $skipped_count++;
+//             continue;
+//         }
+
+//         // Validate account name
+//         if (!isValidAccountName($sp_account)) {
+//             $domain_verified = 1;
+//             $domain_status = 0;
+//             $validation_response = "Invalid response";
+//             $invalid_account_count++;
+
+//             $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
+//             $insertStmt->execute();
+//             continue;
+//         }
+
+//         // Check for excluded
+//         if (in_array(strtolower($sp_account), $excludedAccounts)) {
+//             $domain_verified = 1;
+//             $domain_status = 1;
+//             $validation_response = "Excluded: Account";
+//             $excluded_count++;
+//         } elseif (array_key_exists(strtolower($sp_domain), $excludedDomains)) {
+//             $domain_verified = 1;
+//             $domain_status = 1;
+//             $validation_response = $excludedDomains[strtolower($sp_domain)];
+//             $excluded_count++;
+//         }
+
+//         // Insert valid or excluded email
+//         $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
+//         $insertStmt->execute();
+//         $inserted_count++;
+
+//         if ($inserted_count % $batchSize === 0 || $excluded_count % $batchSize === 0 || $invalid_account_count % $batchSize === 0) {
+//             $conn->commit();
+//             $conn->begin_transaction();
+//         }
+//     }
+
+//     $conn->commit();
+//     fclose($handle);
+
+
+
+//     return [
+//         "status" => "success",
+//         "message" => "CSV processed successfully",
+//         "inserted" => $inserted_count,
+//         "excluded" => $excluded_count,
+//         "invalid_accounts" => $invalid_account_count,
+//         "skipped" => $skipped_count
+//     ];
 // }
+
+
+
 
 
 function handleGetRequest()
@@ -328,74 +444,5 @@ function getDomainIP($domain)
     $aRecord = @gethostbyname($domain);
     return ($aRecord !== $domain) ? $aRecord : false;
 }
-
-// function startBackgroundDomainVerification()
-// {
-//     $scriptPath = __DIR__ . '/verify_domain.php';
-
-//     // Check if the script exists
-//     if (!file_exists($scriptPath)) {
-//         error_log("Error: verify_domain.php not found at: $scriptPath");
-//         return false;
-//     }
-
-//     // Run the script in the background depending on the OS
-//     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-//         // Windows - escape the script path properly
-//         $command = "start /B php \"" . escapeshellcmd($scriptPath) . "\"";
-//         pclose(popen($command, "r"));
-//     } else {
-//         // Unix/Linux - use nohup to ensure it continues after terminal is closed
-//         $command = "nohup php " . escapeshellcmd($scriptPath) . " > /dev/null 2>&1 &";
-//         exec($command);
-//     }
-
-//     return true;
-// }
-
-// // Call it after insertion
-// if ($inserted_count > 0) {
-//     startBackgroundDomainVerification();
-// }
-
-
-function startBackgroundDomainVerification()
-{
-    $scriptPath = __DIR__ . '/verify_domain.php';
-    $logPath = __DIR__ . '/verify_domain_log.txt';
-
-    // Check if the script exists
-    if (!file_exists($scriptPath)) {
-        error_log("Error: verify_domain.php not found at: $scriptPath");
-        return false;
-    }
-
-    // Choose the correct PHP binary
-    $phpPath = '/opt/lampp/bin/php'; // Full path to your PHP CLI
-
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        // Windows
-        $command = "start /B \"$phpPath\" \"" . escapeshellarg($scriptPath) . "\"";
-        pclose(popen($command, "r"));
-    } else {
-        // Unix/Linux
-        $command = "nohup $phpPath -q " . escapeshellarg($scriptPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
-        exec($command);
-    }
-
-    return true;
-}
-
-// Call it after successful insertion
-if ($inserted_count > 0) {
-    startBackgroundDomainVerification();
-}
-
-
-
-$conn->close();
-
-exec('php  ./includes/verify_domain.php > /dev/null 2>&1 &');
-
 
 ?>
