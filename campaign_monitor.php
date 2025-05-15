@@ -525,8 +525,6 @@ $conn->close();
                                             </button>
                                         <?php endif; ?>
                                     </form>
-
-
                                 </td>
                             </tr>
                         <?php endforeach; ?>
