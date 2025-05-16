@@ -193,7 +193,7 @@ function renderTable(emails) {
   elements.tableBody.innerHTML = "";
   elements.emptyState.classList.add("hidden");
   elements.loadingState.classList.add("hidden");
-
+  
   emails.forEach((row) => {
     const rowElement = document.createElement("tr");
     rowElement.className = "hover:bg-gray-50 transition";
@@ -436,6 +436,3 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("nextPage").click();
   }, 100); // Ensures the button is fully loaded before clicking
 });
-
-
-

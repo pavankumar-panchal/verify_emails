@@ -170,8 +170,6 @@ try {
 }
 
 
-
-
 $conn->close();
 
 

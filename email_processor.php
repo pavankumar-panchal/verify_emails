@@ -121,6 +121,7 @@ function normalizeGmail($email)
     return $account . '@gmail.com';
 }
 
+normalizeGmail($email);
 
 function handlePostRequest()
 {
@@ -173,7 +174,9 @@ function handlePostRequest()
         if (empty($data[0]))
             continue;
 
-        $email = strtolower(trim($data[0]));
+        // $email = strtolower(trim($data[0]));
+        $email = normalizeGmail(trim($data[0]));
+
         $email = preg_replace('/[^\x20-\x7E]/', '', $email);
 
         if (isset($uniqueEmails[$email])) {
@@ -308,19 +311,20 @@ function handleDeleteRequest()
     }
 }
 
-function getDomainIP($domain)
-{
-    // Check MX records first
-    if (getmxrr($domain, $mxhosts)) {
-        $mxIp = @gethostbyname($mxhosts[0]);
-        if ($mxIp !== $mxhosts[0]) {
-            return $mxIp;
-        }
-    }
+// function getDomainIP($domain)
+// {
+//     // Check MX records first
+//     if (getmxrr($domain, $mxhosts)) {
+//         $mxIp = @gethostbyname($mxhosts[0]);
+//         if ($mxIp !== $mxhosts[0]) {
+//             return $mxIp;
+//         }
+//     }
 
-    // Fallback to A record
-    $aRecord = @gethostbyname($domain);
-    return ($aRecord !== $domain) ? $aRecord : false;
-}
+//     // Fallback to A record
+//     $aRecord = @gethostbyname($domain);
+//     return ($aRecord !== $domain) ? $aRecord : false;
+// }
+
 
 ?>

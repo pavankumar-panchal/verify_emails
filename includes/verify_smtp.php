@@ -370,9 +370,6 @@ if ($result && $result->num_rows > 0) {
     }
 
     echo "✅ All matching csv_list records updated based on email data.";
-} else {
-    echo "⚠️ No matching campaigns found to update.";
 }
-
 
 ?>

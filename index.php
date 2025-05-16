@@ -371,51 +371,25 @@
 
 
 
-        // function processCSVAndVerify() {
-        //     const formData = new FormData();
-        //     const fileInput = document.querySelector('#csvFile'); // make sure this is your CSV input ID
-        //     formData.append("file", fileInput.files[0]);
 
-        //     // Step 1: Upload CSV and save emails
-        //     fetch("email_processor.php", {
-        //         method: "POST",
-        //         body: formData
-        //     })
-        //         .then(response => response.text())
-        //         .then(saveResponse => {
-        //             console.log("CSV Save Response:", saveResponse);
-
-        //             // Step 2: Only after CSV is saved, verify domains
-        //             return fetch("includes/verify_domain.php");
-        //         })
-        //         .then(response => response.text())
-        //         .then(verifyResponse => {
-        //             alert("Verification completed: " + verifyResponse);
-        //         })
-        //         .catch(error => {
-        //             console.error("Error:", error);
-        //             alert("Something went wrong!");
-        //         });
-        // }
-
-        // function triggerDomainVerification() {
-        //     fetch('includes/trigger_domain_verification.php')  // You can create this PHP script to handle the background task
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             if (data.status === 'success') {
-        //                 showStatusMessage("Verification process started!", "success");
-        //                 setTimeout(() => {
-        //                     fetchProgress();  // Start checking progress after 5 seconds
-        //                 }, 10000);
-        //             } else {
-        //                 showStatusMessage("Error starting verification process.", "error");
-        //             }
-        //         })
-        //         .catch(error => {
-        //             console.error("Error triggering domain verification:", error);
-        //             showStatusMessage("Error triggering domain verification.", "error");
-        //         });
-        // }
+        function triggerDomainVerification() {
+            fetch('includes/pro.php')  // You can create this PHP script to handle the background task
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showStatusMessage("Verification process started!", "success");
+                        setTimeout(() => {
+                            fetchProgress();  // Start checking progress after 10 seconds
+                        }, 10000);
+                    } else {
+                        showStatusMessage("Error starting verification process.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error triggering domain verification:", error);
+                    showStatusMessage("Error triggering domain verification.", "error");
+                });
+        }
 
         // Progress Tracking
 
@@ -532,9 +506,6 @@
             }
         });
 
-    </script>
-
-    <script>
         document.getElementById('csv_file').addEventListener('change', function () {
             const fileInput = this;
             const fileNameDisplay = document.getElementById('fileNameDisplay');
@@ -545,6 +516,7 @@
             }
         });
     </script>
+
 
 
     <script src="./assets/script.js"></script>
