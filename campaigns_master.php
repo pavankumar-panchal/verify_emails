@@ -648,8 +648,8 @@ $smtp_servers = getSMTPServers();
                                             <i class="fas fa-info-circle text-blue-500 mr-1"></i>
                                             <?php echo $campaign['remaining_percentage']; ?>% remaining to allocate
                                         <?php else: ?>
-                                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                                            Fully allocated
+                                            <!-- <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                            Fully allocated -->
                                         <?php endif; ?>
                                     </span>
                                     <button type="submit" name="distribute"
@@ -709,7 +709,7 @@ $smtp_servers = getSMTPServers();
                 
                 <div class="relative w-32">
                     <input type="number" name="distribution[${newIndex}][percentage]" min="1" 
-                        max="${availablePercentage}" step="0.1" value="${Math.min(10, availablePercentage).toFixed(1)}" 
+                        max="${availablePercentage}" step="0.1" value="${Math.min(100, availablePercentage).toFixed(1)}" 
                         class="text-sm border border-gray-300 rounded-lg px-3 py-2 pr-8 w-full focus:ring-blue-500 focus:border-blue-500"
                         onchange="updateEmailCount(this, ${totalEmails})">
                     <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">%</span>

@@ -146,7 +146,7 @@ function handlePostRequest()
     $uniqueEmails = [];
 
     $listName = $_POST['list_name'];
-    
+
     // $fileName = $_FILES['csv_file']['name'];
     $fileName = $_POST['file_name'];
 
@@ -267,131 +267,6 @@ function handlePostRequest()
         "invalid" => $invalid
     ];
 }
-
-
-// function handlePostRequest()
-// {
-//     global $conn;
-
-
-//     if (!isset($_FILES['csv_file'])) {
-//         return ["status" => "error", "message" => "No file uploaded"];
-//     }
-
-//     $file = $_FILES['csv_file']['tmp_name'];
-//     if (!file_exists($file)) {
-//         return ["status" => "error", "message" => "File upload failed"];
-//     }
-
-//     $excludedAccounts = getExcludedAccounts();
-//     $excludedDomains = getExcludedDomainsWithIPs();
-
-//     $batchSize = 100;
-//     $skipped_count = 0;
-//     $inserted_count = 0;
-//     $excluded_count = 0;
-//     $invalid_account_count = 0;
-//     $uniqueEmails = [];
-
-//     $query=$conn->prepare("INSERT INTO csv_list where id=$ ");
-
-//     $checkStmt = $conn->prepare("SELECT id FROM emails WHERE raw_emailid = ? LIMIT 1");
-//     $insertStmt = $conn->prepare("INSERT INTO emails (raw_emailid, sp_account, sp_domain, domain_verified, domain_status, validation_response) VALUES (?, ?, ?, ?, ?, ?)");
-
-//     if (($handle = fopen($file, "r")) === false) {
-//         return ["status" => "error", "message" => "Failed to read CSV file"];
-//     }
-
-//     $conn->begin_transaction();
-
-//     while (($data = fgetcsv($handle, 1000, ",")) !== false) {
-//         if (empty($data[0]))
-//             continue;
-
-//         // Sanitize and clean email
-//         $email = strtolower(trim($data[0]));
-//         $email = preg_replace('/[^\x20-\x7E]/', '', $email); // Remove non-printable characters
-
-//         if (isset($uniqueEmails[$email])) {
-//             $skipped_count++;
-//             continue;
-//         }
-//         $uniqueEmails[$email] = true;
-
-//         $emailParts = explode("@", $email);
-//         if (count($emailParts) != 2) {
-//             $skipped_count++;
-//             continue;
-//         }
-
-//         $sp_account = $emailParts[0];
-//         $sp_domain = $emailParts[1];
-
-//         $domain_verified = 0;
-//         $domain_status = 0;
-//         $validation_response = "Not Verified Yet";
-
-//         // Check if already in database
-//         $checkStmt->bind_param("s", $email);
-//         $checkStmt->execute();
-//         if ($checkStmt->get_result()->num_rows > 0) {
-//             $skipped_count++;
-//             continue;
-//         }
-
-//         // Validate account name
-//         if (!isValidAccountName($sp_account)) {
-//             $domain_verified = 1;
-//             $domain_status = 0;
-//             $validation_response = "Invalid response";
-//             $invalid_account_count++;
-
-//             $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
-//             $insertStmt->execute();
-//             continue;
-//         }
-
-//         // Check for excluded
-//         if (in_array(strtolower($sp_account), $excludedAccounts)) {
-//             $domain_verified = 1;
-//             $domain_status = 1;
-//             $validation_response = "Excluded: Account";
-//             $excluded_count++;
-//         } elseif (array_key_exists(strtolower($sp_domain), $excludedDomains)) {
-//             $domain_verified = 1;
-//             $domain_status = 1;
-//             $validation_response = $excludedDomains[strtolower($sp_domain)];
-//             $excluded_count++;
-//         }
-
-//         // Insert valid or excluded email
-//         $insertStmt->bind_param("ssssss", $email, $sp_account, $sp_domain, $domain_verified, $domain_status, $validation_response);
-//         $insertStmt->execute();
-//         $inserted_count++;
-
-//         if ($inserted_count % $batchSize === 0 || $excluded_count % $batchSize === 0 || $invalid_account_count % $batchSize === 0) {
-//             $conn->commit();
-//             $conn->begin_transaction();
-//         }
-//     }
-
-//     $conn->commit();
-//     fclose($handle);
-
-
-
-//     return [
-//         "status" => "success",
-//         "message" => "CSV processed successfully",
-//         "inserted" => $inserted_count,
-//         "excluded" => $excluded_count,
-//         "invalid_accounts" => $invalid_account_count,
-//         "skipped" => $skipped_count
-//     ];
-// }
-
-
-
 
 
 function handleGetRequest()
