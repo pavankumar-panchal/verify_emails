@@ -155,6 +155,8 @@ function formatDate($dateString, $full = false)
     }
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 

@@ -422,6 +422,8 @@ $campaigns = getCampaignsWithStats();
 $smtp_servers = getSMTPServers();
 ?>
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
